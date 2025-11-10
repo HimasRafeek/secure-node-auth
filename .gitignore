@@ -48,3 +48,5 @@ lerna-debug.log*
 
 # Optional audit folder (keep in repo but don't publish to npm)
 # audit/
+
+SECURITY.md

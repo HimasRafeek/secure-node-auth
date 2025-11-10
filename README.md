@@ -555,7 +555,7 @@ This package has undergone **5 rounds of comprehensive security audits** and imp
 
 **Security Standards Compliance**: OWASP Top 10, NIST Framework, PCI-DSS, GDPR
 
-See [SECURITY.md](docs/SECURITY.md) for complete security documentation and [AUDIT-REPORT.md](docs/AUDIT-REPORT.md) for detailed audit findings.
+See [SECURITY.md](docs/SECURITY.md) for complete security documentation.
 
 ## 🤝 Contributing
 
