@@ -491,8 +491,8 @@ console.log('Active users:', rows[0].total);
 - 🔄 [Authentication Flow Diagram](docs/FLOW_DIAGRAM.md) - Visual guide showing how authentication works
 - ⚡ [Quick Reference](docs/QUICK_REFERENCE_USER_DATA.md) - Common patterns cheat sheet
 - 🚀 [Getting Started](docs/GETTING_STARTED.md) - Step-by-step setup guide
-- 🔒 [Security Documentation](SECURITY.md) - **Comprehensive security features and best practices**
-- 📋 [Security Audit Report](AUDIT-REPORT.md) - **Expert-level security audit results (49 issues resolved)**
+- 🔒 [Security Documentation](docs/SECURITY.md) - **Comprehensive security features and best practices**
+- 📋 [Security Audit Report](docs/AUDIT-REPORT.md) - **Expert-level security audit results (49 issues resolved)**
 
 ## 🔐 Security Features
 
@@ -508,6 +508,8 @@ This package has undergone **5 rounds of comprehensive security audits** and imp
 - ✅ **Secure Configuration**: Validated defaults with safe fallbacks
 
 **Security Standards Compliance**: OWASP Top 10, NIST Framework, PCI-DSS, GDPR
+
+See [SECURITY.md](docs/SECURITY.md) for complete security documentation and [AUDIT-REPORT.md](docs/AUDIT-REPORT.md) for detailed audit findings.
 
 ## 🤝 Contributing
 
