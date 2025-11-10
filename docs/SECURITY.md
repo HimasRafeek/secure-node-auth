@@ -333,8 +333,7 @@ auth.on('beforeLogin', ({ email }) => {
 
 ## 🔍 Vulnerability Disclosure
 
-If you discover a security vulnerability, please email:
-security@yourdomain.com
+If you discover a security vulnerability, please open an issue.
 
 **Do not** open a public issue for security vulnerabilities.
 
