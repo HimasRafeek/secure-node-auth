@@ -607,6 +607,6 @@ declare module 'secure-node-auth' {
 
 For TypeScript-specific issues, please check:
 
-- GitHub Issues: https://github.com/yourusername/secure-node-auth/issues
+- GitHub Issues: https://github.com/HimasRafeek/secure-node-auth/issues
 - Documentation: https://secure-node-auth.dev/docs/typescript
 - Discord Community: https://discord.gg/secure-node-auth

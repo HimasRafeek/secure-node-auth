@@ -6,7 +6,7 @@ Thank you for considering contributing to Secure Node Auth! We welcome contribut
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/yourusername/secure-node-auth/issues)
+1. Check if the bug has already been reported in [Issues](https://github.com/HimasRafeek/secure-node-auth/issues)
 2. If not, create a new issue with:
    - Clear title and description
    - Steps to reproduce
@@ -35,7 +35,7 @@ Thank you for considering contributing to Secure Node Auth! We welcome contribut
 
 ```bash
 # Clone your fork
-git clone https://github.com/yourusername/secure-node-auth.git
+git clone https://github.com/HimasRafeek/secure-node-auth.git
 cd secure-node-auth
 
 # Install dependencies

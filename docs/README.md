@@ -537,9 +537,9 @@ MIT © 2025
 
 ## 🔗 Links
 
-- [GitHub Repository](https://github.com/yourusername/secure-node-auth)
+- [GitHub Repository](https://github.com/HimasRafeek/secure-node-auth)
 - [NPM Package](https://www.npmjs.com/package/secure-node-auth)
-- [Issue Tracker](https://github.com/yourusername/secure-node-auth/issues)
+- [Issue Tracker](https://github.com/HimasRafeek/secure-node-auth/issues)
 
 ## 💡 Support
 
