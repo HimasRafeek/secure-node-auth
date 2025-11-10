@@ -1,7 +1,7 @@
 {
   "name": "secure-node-auth",
-  "version": "1.0.1",
-  "description": "Blazing fast, zero-config MySQL authentication system with JWT. Set up secure auth in seconds with auto-schema setup and extensible custom fields.",
+  "version": "1.1.0",
+  "description": "Blazing fast, zero-config authentication system with JWT for MySQL and PostgreSQL. Set up secure auth in seconds with auto-schema setup and extensible custom fields.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "files": [
@@ -17,12 +17,15 @@
   "keywords": [
     "authentication",
     "mysql",
+    "postgresql",
+    "postgres",
     "jwt",
     "auth",
     "security",
     "express",
     "fastify",
     "mysql2",
+    "pg",
     "login",
     "register",
     "token",
@@ -75,6 +78,7 @@
   },
   "optionalDependencies": {
     "ioredis": "^5.4.1",
+    "pg": "^8.11.3",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0"
   },

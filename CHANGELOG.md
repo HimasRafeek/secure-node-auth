@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-11-10
+
+### 🎉 Major Feature: PostgreSQL Support
+
+### Added
+- 🗄️ **Full PostgreSQL support** - Use PostgreSQL or MySQL with a simple config change
+- 📦 New `PostgresDatabaseManager` class for PostgreSQL operations
+- 🏭 `DatabaseFactory` to automatically choose the right database adapter
+- 📚 Comprehensive PostgreSQL documentation and migration guide
+- 💡 PostgreSQL example file (`examples/postgres-example.js`)
+- 🔧 Auto-detection of database type and default port (3306 for MySQL, 5432 for PostgreSQL)
+- 🎯 Support for PostgreSQL-specific features (SERIAL, double quotes, $1 placeholders)
+- 🔄 Automatic SQL type conversion between MySQL and PostgreSQL
+
+### Changed
+- 📖 Updated README with PostgreSQL quick start and examples
+- 🏷️ Added PostgreSQL-related keywords to package.json
+- 📝 Updated package description to mention both databases
+
+### Technical Details
+- PostgreSQL uses `SERIAL` instead of `AUTO_INCREMENT`
+- Automatic conversion of MySQL types to PostgreSQL equivalents
+- Parameterized queries use `$1, $2` syntax for PostgreSQL
+- Table/column names use double quotes for PostgreSQL
+- Trigger-based `updatedAt` column for PostgreSQL
+- Full connection pooling support for both databases
+
 ## [1.0.1] - 2025-11-10
 
 ### Added

@@ -1,0 +1,515 @@
+const { Pool } = require('pg');
+
+/**
+ * PostgresDatabaseManager - Handles all database operations for PostgreSQL
+ * Auto-creates tables, indexes, and manages connections
+ */
+class PostgresDatabaseManager {
+  constructor(config) {
+    this.config = config;
+    this.pool = null;
+  }
+
+  /**
+   * Create connection pool
+   */
+  async connect() {
+    try {
+      // Validate config before connecting
+      if (!this.config || typeof this.config !== 'object') {
+        throw new Error('Database configuration is required');
+      }
+
+      if (!this.config.host || !this.config.user || !this.config.database) {
+        throw new Error('Database host, user, and database name are required');
+      }
+
+      this.pool = new Pool(this.config);
+
+      // Test connection
+      const client = await this.pool.connect();
+      await client.query('SELECT NOW()');
+      client.release();
+
+      return true;
+    } catch (error) {
+      // Clean up pool on failure
+      if (this.pool) {
+        try {
+          await this.pool.end();
+        } catch (closeError) {
+          // Ignore close errors
+        }
+        this.pool = null;
+      }
+      throw new Error(`Database connection failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create all necessary tables
+   */
+  async createTables(tables, customFields = []) {
+    const client = await this.pool.connect();
+
+    try {
+      // Build custom fields SQL with proper escaping
+      const customFieldsSQL = customFields
+        .map((field) => {
+          // Validate field name to prevent SQL injection
+          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field.name)) {
+            throw new Error(
+              `Invalid field name: ${field.name}. Only alphanumeric and underscore allowed.`
+            );
+          }
+
+          // Convert MySQL types to PostgreSQL types
+          let pgType = this._convertMySQLTypeToPG(field.type);
+
+          let sql = `"${field.name}" ${pgType}`;
+          if (field.required) sql += ' NOT NULL';
+
+          // Handle default values
+          if (field.defaultValue !== null && field.defaultValue !== undefined) {
+            // For numeric types, don't quote
+            if (
+              ['INT', 'BIGINT', 'FLOAT', 'DOUBLE', 'DECIMAL', 'NUMERIC', 'INTEGER'].some((t) =>
+                pgType.toUpperCase().includes(t)
+              )
+            ) {
+              sql += ` DEFAULT ${field.defaultValue}`;
+            } else if (pgType.toUpperCase().includes('BOOLEAN')) {
+              sql += ` DEFAULT ${field.defaultValue ? 'TRUE' : 'FALSE'}`;
+            } else {
+              // For string types, escape properly
+              const escapedValue = field.defaultValue.toString().replace(/'/g, "''");
+              sql += ` DEFAULT '${escapedValue}'`;
+            }
+          }
+
+          if (field.unique) sql += ' UNIQUE';
+          return sql;
+        })
+        .join(',\n    ');
+
+      // Users table
+      const usersTableSQL = `
+        CREATE TABLE IF NOT EXISTS "${tables.users}" (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) NOT NULL UNIQUE,
+          password VARCHAR(255) NOT NULL,
+          "firstName" VARCHAR(100),
+          "lastName" VARCHAR(100),
+          "emailVerified" BOOLEAN DEFAULT FALSE,
+          "emailVerificationToken" VARCHAR(255),
+          "resetPasswordToken" VARCHAR(255),
+          "resetPasswordExpires" BIGINT,
+          "isActive" BOOLEAN DEFAULT TRUE,
+          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          ${customFieldsSQL ? ',' + customFieldsSQL : ''}
+        );
+      `;
+
+      // Refresh tokens table
+      const refreshTokensTableSQL = `
+        CREATE TABLE IF NOT EXISTS "${tables.refreshTokens}" (
+          id SERIAL PRIMARY KEY,
+          "userId" INTEGER NOT NULL,
+          token TEXT NOT NULL,
+          revoked BOOLEAN DEFAULT FALSE,
+          "expiresAt" BIGINT NOT NULL,
+          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("userId") REFERENCES "${tables.users}"(id) ON DELETE CASCADE
+        );
+      `;
+
+      // Login attempts table
+      const loginAttemptsTableSQL = `
+        CREATE TABLE IF NOT EXISTS "${tables.loginAttempts}" (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) NOT NULL,
+          success BOOLEAN DEFAULT FALSE,
+          "ipAddress" VARCHAR(45),
+          "userAgent" TEXT,
+          "attemptedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `;
+
+      // Email verification tokens table
+      const verificationTokensTableSQL = `
+        CREATE TABLE IF NOT EXISTS "${tables.verificationTokens}" (
+          id SERIAL PRIMARY KEY,
+          "userId" INTEGER NOT NULL,
+          token VARCHAR(255) NOT NULL UNIQUE,
+          "expiresAt" BIGINT NOT NULL,
+          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("userId") REFERENCES "${tables.users}"(id) ON DELETE CASCADE
+        );
+      `;
+
+      // Create trigger function for updated_at
+      const triggerFunctionSQL = `
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          NEW."updatedAt" = CURRENT_TIMESTAMP;
+          RETURN NEW;
+        END;
+        $$ language 'plpgsql';
+      `;
+
+      await client.query(usersTableSQL);
+      await client.query(refreshTokensTableSQL);
+      await client.query(loginAttemptsTableSQL);
+      await client.query(verificationTokensTableSQL);
+
+      // Create trigger function
+      await client.query(triggerFunctionSQL);
+
+      // Create trigger for users table
+      await client.query(`
+        DROP TRIGGER IF EXISTS update_users_updated_at ON "${tables.users}";
+        CREATE TRIGGER update_users_updated_at
+        BEFORE UPDATE ON "${tables.users}"
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+      `);
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Convert MySQL types to PostgreSQL types
+   */
+  _convertMySQLTypeToPG(mysqlType) {
+    const typeUpper = mysqlType.toUpperCase();
+
+    // Handle ENUM specially
+    if (typeUpper.includes('ENUM')) {
+      // Extract enum values and convert to CHECK constraint format
+      // For now, return VARCHAR and let validation happen at app level
+      return 'VARCHAR(50)';
+    }
+
+    // INT variations
+    if (typeUpper.includes('INT')) return 'INTEGER';
+    if (typeUpper.includes('BIGINT')) return 'BIGINT';
+    if (typeUpper.includes('TINYINT(1)') || typeUpper === 'BOOLEAN') return 'BOOLEAN';
+
+    // String types
+    if (typeUpper.includes('VARCHAR')) return mysqlType.replace(/varchar/i, 'VARCHAR');
+    if (typeUpper.includes('TEXT')) return 'TEXT';
+
+    // Numeric types
+    if (typeUpper.includes('FLOAT')) return 'REAL';
+    if (typeUpper.includes('DOUBLE')) return 'DOUBLE PRECISION';
+    if (typeUpper.includes('DECIMAL')) return mysqlType.replace(/decimal/i, 'DECIMAL');
+
+    // Date/Time types
+    if (typeUpper.includes('DATETIME') || typeUpper.includes('TIMESTAMP')) return 'TIMESTAMP';
+    if (typeUpper.includes('DATE')) return 'DATE';
+    if (typeUpper.includes('TIME')) return 'TIME';
+
+    // Default
+    return mysqlType;
+  }
+
+  /**
+   * Create indexes for performance
+   */
+  async createIndexes(tables) {
+    const client = await this.pool.connect();
+
+    try {
+      // These indexes improve query performance
+      const indexes = [
+        `CREATE INDEX IF NOT EXISTS idx_email ON "${tables.users}"(email)`,
+        `CREATE INDEX IF NOT EXISTS idx_user_tokens ON "${tables.refreshTokens}"("userId", revoked)`,
+        `CREATE INDEX IF NOT EXISTS idx_token_expires ON "${tables.refreshTokens}"("expiresAt")`,
+        `CREATE INDEX IF NOT EXISTS idx_email_attempted ON "${tables.loginAttempts}"(email, "attemptedAt")`,
+        `CREATE INDEX IF NOT EXISTS idx_token ON "${tables.verificationTokens}"(token)`,
+        `CREATE INDEX IF NOT EXISTS idx_user_token ON "${tables.verificationTokens}"("userId", token)`,
+      ];
+
+      for (const indexSQL of indexes) {
+        try {
+          await client.query(indexSQL);
+        } catch (error) {
+          // Index might already exist, continue
+          if (!error.message.includes('already exists')) {
+            console.warn(`Index creation warning: ${error.message}`);
+          }
+        }
+      }
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Find user by email
+   */
+  async findUserByEmail(email, tableName) {
+    this._ensureConnected();
+
+    if (!email || typeof email !== 'string') {
+      return null;
+    }
+
+    const result = await this.pool.query(`SELECT * FROM "${tableName}" WHERE email = $1 LIMIT 1`, [
+      email,
+    ]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Find user by ID
+   */
+  async findUserById(userId, tableName) {
+    this._ensureConnected();
+
+    if (!userId) {
+      return null;
+    }
+
+    const result = await this.pool.query(`SELECT * FROM "${tableName}" WHERE id = $1 LIMIT 1`, [
+      userId,
+    ]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Create new user
+   */
+  async createUser(userData, tableName) {
+    this._ensureConnected();
+
+    if (!userData || typeof userData !== 'object') {
+      throw new Error('User data is required');
+    }
+
+    if (!userData.email || !userData.password) {
+      throw new Error('Email and password are required fields');
+    }
+
+    // Validate number of fields to prevent abuse
+    const fieldCount = Object.keys(userData).length;
+    if (fieldCount > 50) {
+      throw new Error('Too many fields. Maximum 50 fields allowed per user.');
+    }
+
+    const fields = Object.keys(userData);
+    const values = Object.values(userData);
+    const placeholders = fields.map((_, i) => `$${i + 1}`).join(', ');
+
+    // Quote field names for PostgreSQL
+    const quotedFields = fields.map((field) => `"${field}"`).join(', ');
+
+    const sql = `INSERT INTO "${tableName}" (${quotedFields}) VALUES (${placeholders}) RETURNING id`;
+
+    const result = await this.pool.query(sql, values);
+    return result.rows[0].id;
+  }
+
+  /**
+   * Update user
+   */
+  async updateUser(userId, updates, tableName) {
+    this._ensureConnected();
+
+    if (!userId || !updates || typeof updates !== 'object') {
+      throw new Error('User ID and updates object are required');
+    }
+
+    const fields = Object.keys(updates);
+    if (fields.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    // Validate number of fields
+    if (fields.length > 50) {
+      throw new Error('Too many fields. Maximum 50 fields allowed per update.');
+    }
+
+    const values = Object.values(updates);
+    const setClause = fields.map((field, i) => `"${field}" = $${i + 1}`).join(', ');
+
+    const sql = `UPDATE "${tableName}" SET ${setClause} WHERE id = $${fields.length + 1}`;
+
+    const result = await this.pool.query(sql, [...values, userId]);
+    return result.rowCount > 0;
+  }
+
+  /**
+   * Store refresh token
+   */
+  async storeRefreshToken(userId, token, tableName) {
+    this._ensureConnected();
+
+    if (!userId || !token || !token.token || !token.expiresAt) {
+      throw new Error('User ID, token, and expiresAt are required');
+    }
+
+    const sql = `
+      INSERT INTO "${tableName}" ("userId", token, "expiresAt")
+      VALUES ($1, $2, $3)
+      RETURNING id
+    `;
+
+    const result = await this.pool.query(sql, [userId, token.token, token.expiresAt]);
+    return result.rows[0].id;
+  }
+
+  /**
+   * Find refresh token
+   */
+  async findRefreshToken(token, tableName) {
+    this._ensureConnected();
+
+    if (!token || typeof token !== 'string') {
+      return null;
+    }
+
+    const sql = `
+      SELECT * FROM "${tableName}"
+      WHERE token = $1 AND revoked = FALSE AND "expiresAt" > $2
+      LIMIT 1
+    `;
+
+    const result = await this.pool.query(sql, [token, Date.now()]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Revoke refresh token
+   */
+  async revokeRefreshToken(token, tableName) {
+    this._ensureConnected();
+
+    if (!token || typeof token !== 'string') {
+      throw new Error('Token is required');
+    }
+
+    const sql = `
+      UPDATE "${tableName}"
+      SET revoked = TRUE
+      WHERE token = $1
+    `;
+
+    const result = await this.pool.query(sql, [token]);
+    return result.rowCount > 0;
+  }
+
+  /**
+   * Revoke all user tokens
+   */
+  async revokeAllUserTokens(userId, tableName) {
+    this._ensureConnected();
+
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    const sql = `
+      UPDATE "${tableName}"
+      SET revoked = TRUE
+      WHERE "userId" = $1 AND revoked = FALSE
+    `;
+
+    const result = await this.pool.query(sql, [userId]);
+    return result.rowCount;
+  }
+
+  /**
+   * Record login attempt
+   */
+  async recordLoginAttempt(email, success, tableName, ipAddress = null, userAgent = null) {
+    this._ensureConnected();
+
+    const sql = `
+      INSERT INTO "${tableName}" (email, success, "ipAddress", "userAgent")
+      VALUES ($1, $2, $3, $4)
+    `;
+
+    await this.pool.query(sql, [email, success, ipAddress, userAgent]);
+  }
+
+  /**
+   * Check if account is locked
+   */
+  async isAccountLocked(email, tableName, maxAttempts, lockoutTime) {
+    this._ensureConnected();
+
+    const cutoffTime = new Date(Date.now() - lockoutTime);
+
+    const sql = `
+      SELECT COUNT(*) as count
+      FROM "${tableName}"
+      WHERE email = $1 AND success = FALSE AND "attemptedAt" > $2
+    `;
+
+    const result = await this.pool.query(sql, [email, cutoffTime]);
+    const failedAttempts = parseInt(result.rows[0].count);
+
+    return failedAttempts >= maxAttempts;
+  }
+
+  /**
+   * Clean up expired tokens
+   */
+  async cleanupExpiredTokens(tableName) {
+    this._ensureConnected();
+
+    const sql = `DELETE FROM "${tableName}" WHERE "expiresAt" < $1`;
+    const result = await this.pool.query(sql, [Date.now()]);
+    return result.rowCount;
+  }
+
+  /**
+   * Get user count
+   */
+  async getUserCount(tableName) {
+    this._ensureConnected();
+
+    const result = await this.pool.query(`SELECT COUNT(*) as count FROM "${tableName}"`);
+    return parseInt(result.rows[0].count);
+  }
+
+  /**
+   * Close database connection
+   */
+  async close() {
+    if (this.pool) {
+      await this.pool.end();
+      this.pool = null;
+    }
+  }
+
+  /**
+   * Get the connection pool
+   */
+  getPool() {
+    return this.pool;
+  }
+
+  /**
+   * Execute raw query (use with caution)
+   */
+  async query(sql, params = []) {
+    this._ensureConnected();
+    return await this.pool.query(sql, params);
+  }
+
+  /**
+   * Ensure connection is established
+   */
+  _ensureConnected() {
+    if (!this.pool) {
+      throw new Error('Database not connected. Call connect() first.');
+    }
+  }
+}
+
+module.exports = PostgresDatabaseManager;

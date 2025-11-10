@@ -1,6 +1,6 @@
 # 🔐 Secure Node Auth
 
-> Blazing fast, zero-config MySQL authentication system with JWT. Set up secure auth in seconds!
+> Blazing fast, zero-config authentication system with JWT for **MySQL & PostgreSQL**. Set up secure auth in seconds!
 
 [![npm version](https://img.shields.io/npm/v/secure-node-auth.svg)](https://www.npmjs.com/package/secure-node-auth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,8 +9,9 @@
 ## ✨ Features
 
 - ⚡ **Zero Configuration** - Works out of the box with sensible defaults
-- 🔒 **Production-Ready Security** - Bcrypt hashing, JWT tokens, rate limiting, account lockout
-- 🚀 **Lightning Fast** - Built on mysql2 with connection pooling and optimized queries
+- �️ **MySQL & PostgreSQL Support** - Choose your preferred database with one line of config
+- �🔒 **Production-Ready Security** - Bcrypt hashing, JWT tokens, rate limiting, account lockout
+- 🚀 **Lightning Fast** - Built with connection pooling and optimized queries
 - 🎨 **Highly Customizable** - Add custom fields, hooks, and configurations
 - 🔄 **Auto Schema Setup** - Automatically creates tables, indexes, and relationships
 - 🎯 **Express & Fastify Support** - Pre-built routes and middleware for both frameworks
@@ -26,21 +27,32 @@ npm install secure-node-auth
 ```
 
 **Dependencies:**
-- `mysql2` - MySQL client
+- `mysql2` or `pg` - Database client (MySQL or PostgreSQL)
 - `jsonwebtoken` - JWT token generation
 - `bcrypt` - Password hashing
 - `validator` - Input validation
 - `express` or `fastify` - Web framework (peer dependencies)
 
+**For MySQL:**
+```bash
+npm install secure-node-auth mysql2
+```
+
+**For PostgreSQL:**
+```bash
+npm install secure-node-auth pg
+```
+
 ## 🚀 Quick Start
 
-### Basic Setup (3 lines!)
+### MySQL Setup (3 lines!)
 
 ```javascript
 const SecureNodeAuth = require('secure-node-auth');
 
 const auth = new SecureNodeAuth({
   connection: {
+    type: 'mysql',  // Optional, defaults to MySQL
     host: 'localhost',
     user: 'root',
     password: 'your_password',
@@ -53,6 +65,29 @@ await auth.init(); // Auto-creates tables!
 // Use with Express
 app.use('/auth', auth.router());
 ```
+
+### PostgreSQL Setup (3 lines!)
+
+```javascript
+const SecureNodeAuth = require('secure-node-auth');
+
+const auth = new SecureNodeAuth({
+  connection: {
+    type: 'postgres',  // Use PostgreSQL
+    host: 'localhost',
+    user: 'postgres',
+    password: 'your_password',
+    database: 'myapp'
+  }
+});
+
+await auth.init(); // Auto-creates tables!
+
+// Use with Express
+app.use('/auth', auth.router());
+```
+
+**📘 [Complete PostgreSQL Guide](docs/POSTGRES_GUIDE.md)** - Migration, Docker setup, and advanced features.
 
 That's it! You now have a complete authentication system with:
 - ✅ User registration
@@ -532,6 +567,7 @@ console.log('Active users:', rows[0].total);
 
 ## 📚 Additional Guides
 
+- 🗄️ [PostgreSQL Integration Guide](docs/POSTGRES_GUIDE.md) - Complete guide for PostgreSQL, migration, and Docker setup
 - ⚡ [Fastify Integration Guide](docs/FASTIFY_GUIDE.md) - Complete guide for using with Fastify framework
 - 📖 [Accessing User-Specific Data](docs/USER_DATA_ACCESS.md) - Complete guide on protecting routes and accessing user's posts, orders, etc.
 - 🔄 [Authentication Flow Diagram](docs/FLOW_DIAGRAM.md) - Visual guide showing how authentication works
