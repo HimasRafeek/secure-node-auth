@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Data Access Guide - Secure Node Auth</title>
+    <meta name="description" content="Complete guide on protecting routes and accessing user-specific data like posts, orders, and profiles." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="User Data Access Guide - Secure Node Auth" />
+    <meta property="og:description" content="Complete guide on protecting routes and accessing user-specific data like posts, orders, and profiles." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="User Data Access Guide - Secure Node Auth" />
+    <meta name="twitter:description" content="Complete guide on protecting routes and accessing user-specific data like posts, orders, and profiles." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      🔐 Accessing User-Specific Data with Authentication
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      Overview
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-2">
+      🎯 Key Concept: `req.user`
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-3">
+      📋 Complete Examples
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-4">
+      1. Get Current User's Posts
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-5">
+      2. Create Post for Current User
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-6">
+      3. Update Only User's Own Post
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-7">
+      4. Delete Only User's Own Post
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-8">
+      5. Get User Profile with Custom Data
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-9">
+      🔄 Complete Workflow Example
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-10">
+      Step 1: Register User
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-11">
+      Step 2: Create Post (Using Access Token)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-12">
+      Step 3: Get Your Posts
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-13">
+      🏗️ Database Schema Setup
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-14">
+      🔒 Security Best Practices
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-15">
+      ✅ Always Verify Ownership
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-16">
+      ✅ Use Parameterized Queries
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-17">
+      ✅ Return Only Necessary Data
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-18">
+      🎨 Advanced Patterns
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-19">
+      Pattern 1: Middleware to Load User Data
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-20">
+      Pattern 2: Optional Authentication
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-21">
+      Pattern 3: Role-Based Access
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-22">
+      🧪 Testing with curl
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-23">
+      Complete Test Flow
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-24">
+      📱 Frontend Integration
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-25">
+      JavaScript/Fetch Example
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-26">
+      🎯 Summary
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-27">
+      🚀 Run the Example
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">🔐 Accessing User-Specific Data with Authentication</h1><h2 id="heading-1">Overview</h2><p>This guide shows you how to use <strong>secure-node-auth</strong> to protect routes and access data belonging to the authenticated user (like posts, comments, orders, etc.).</p>
+<h2 id="heading-2">🎯 Key Concept: `req.user`</h2><p>When a user is authenticated, the <code>auth.middleware()</code> adds the user&#39;s information to <code>req.user</code>:</p>
+<pre><code class="language-javascript">req.user = {
+  userId: 123,        // User&#39;s ID from database
+  email: &quot;user@example.com&quot;,
+  iat: 1699268400,    // Token issued at
+  exp: 1699269300     // Token expires at
+}
+</code></pre>
+<h2 id="heading-3">📋 Complete Examples</h2><h3 id="heading-4">1. Get Current User's Posts</h3><pre><code class="language-javascript">app.get(&#39;/api/posts/my-posts&#39;, auth.middleware(), async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;  // 👈 Get authenticated user&#39;s ID
+    
+    // Query posts for this user
+    const pool = auth.db.getPool();
+    const [posts] = await pool.execute(
+      &#39;SELECT * FROM posts WHERE userId = ? ORDER BY createdAt DESC&#39;,
+      [userId]
+    );
+    
+    res.json({
+      user: req.user,
+      posts: posts
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+</code></pre>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">curl -X GET http://localhost:3000/api/posts/my-posts \
+  -H &quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;
+</code></pre>
+<hr>
+<h3 id="heading-5">2. Create Post for Current User</h3><pre><code class="language-javascript">app.post(&#39;/api/posts&#39;, auth.middleware(), async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;  // 👈 Automatically get user ID
+    const { title, content } = req.body;
+    
+    const pool = auth.db.getPool();
+    const [result] = await pool.execute(
+      &#39;INSERT INTO posts (userId, title, content) VALUES (?, ?, ?)&#39;,
+      [userId, title, content]
+    );
+    
+    res.json({
+      success: true,
+      post: {
+        id: result.insertId,
+        userId,
+        title,
+        content
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+</code></pre>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-bash">curl -X POST http://localhost:3000/api/posts \
+  -H &quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;title&quot;:&quot;My First Post&quot;,&quot;content&quot;:&quot;Hello world!&quot;}&#39;
+</code></pre>
+<hr>
+<h3 id="heading-6">3. Update Only User's Own Post</h3><pre><code class="language-javascript">app.patch(&#39;/api/posts/:postId&#39;, auth.middleware(), async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const postId = req.params.postId;
+    const { title, content } = req.body;
+    
+    const pool = auth.db.getPool();
+    
+    // 🔒 Security: Check if post belongs to user
+    const [posts] = await pool.execute(
+      &#39;SELECT * FROM posts WHERE id = ? AND userId = ?&#39;,
+      [postId, userId]
+    );
+    
+    if (posts.length === 0) {
+      return res.status(404).json({ 
+        error: &#39;Post not found or unauthorized&#39; 
+      });
+    }
+    
+    // Update the post
+    await pool.execute(
+      &#39;UPDATE posts SET title = ?, content = ? WHERE id = ? AND userId = ?&#39;,
+      [title, content, postId, userId]
+    );
+    
+    res.json({ success: true, message: &#39;Post updated&#39; });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+</code></pre>
+<p><strong>Key Point:</strong> Always verify the data belongs to the authenticated user!</p>
+<hr>
+<h3 id="heading-7">4. Delete Only User's Own Post</h3><pre><code class="language-javascript">app.delete(&#39;/api/posts/:postId&#39;, auth.middleware(), async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const postId = req.params.postId;
+    
+    const pool = auth.db.getPool();
+    
+    // 🔒 Delete only if userId matches
+    const [result] = await pool.execute(
+      &#39;DELETE FROM posts WHERE id = ? AND userId = ?&#39;,
+      [postId, userId]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: &#39;Post not found or unauthorized&#39; });
+    }
+    
+    res.json({ success: true, message: &#39;Post deleted&#39; });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+</code></pre>
+<hr>
+<h3 id="heading-8">5. Get User Profile with Custom Data</h3><pre><code class="language-javascript">app.get(&#39;/api/profile/dashboard&#39;, auth.middleware(), async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    
+    // Get user details
+    const user = await auth.getUserById(userId);
+    
+    // Get user&#39;s statistics
+    const pool = auth.db.getPool();
+    
+    const [postStats] = await pool.execute(
+      &#39;SELECT COUNT(*) as total FROM posts WHERE userId = ?&#39;,
+      [userId]
+    );
+    
+    const [recentPosts] = await pool.execute(
+      &#39;SELECT * FROM posts WHERE userId = ? ORDER BY createdAt DESC LIMIT 5&#39;,
+      [userId]
+    );
+    
+    res.json({
+      user: user,
+      stats: {
+        totalPosts: postStats[0].total
+      },
+      recentPosts: recentPosts
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+</code></pre>
+<hr>
+<h2 id="heading-9">🔄 Complete Workflow Example</h2><h3 id="heading-10">Step 1: Register User</h3><pre><code class="language-bash">curl -X POST http://localhost:3000/auth/register \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;email&quot;: &quot;john@example.com&quot;,
+    &quot;password&quot;: &quot;SecurePass123!&quot;,
+    &quot;firstName&quot;: &quot;John&quot;
+  }&#39;
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;data&quot;: {
+    &quot;user&quot;: { &quot;id&quot;: 1, &quot;email&quot;: &quot;john@example.com&quot; },
+    &quot;tokens&quot;: {
+      &quot;accessToken&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;,
+      &quot;refreshToken&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;
+    }
+  }
+}
+</code></pre>
+<h3 id="heading-11">Step 2: Create Post (Using Access Token)</h3><pre><code class="language-bash"># Save the access token
+TOKEN=&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;
+
+curl -X POST http://localhost:3000/api/posts \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;title&quot;: &quot;My First Post&quot;,
+    &quot;content&quot;: &quot;This is my first blog post!&quot;
+  }&#39;
+</code></pre>
+<h3 id="heading-12">Step 3: Get Your Posts</h3><pre><code class="language-bash">curl -X GET http://localhost:3000/api/posts/my-posts \
+  -H &quot;Authorization: Bearer $TOKEN&quot;
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;user&quot;: { &quot;userId&quot;: 1, &quot;email&quot;: &quot;john@example.com&quot; },
+  &quot;posts&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;userId&quot;: 1,
+      &quot;title&quot;: &quot;My First Post&quot;,
+      &quot;content&quot;: &quot;This is my first blog post!&quot;,
+      &quot;createdAt&quot;: &quot;2025-11-06T10:30:00.000Z&quot;
+    }
+  ],
+  &quot;totalPosts&quot;: 1
+}
+</code></pre>
+<hr>
+<h2 id="heading-13">🏗️ Database Schema Setup</h2><p>Create a posts table linked to users:</p>
+<pre><code class="language-sql">CREATE TABLE posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP NULL,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+  INDEX idx_user_posts (userId, createdAt)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+</code></pre>
+<p><strong>Key points:</strong></p>
+<ul>
+<li><code>userId</code> links to the authenticated user</li>
+<li><code>FOREIGN KEY</code> ensures data integrity</li>
+<li><code>ON DELETE CASCADE</code> removes posts when user is deleted</li>
+<li><code>INDEX</code> on <code>userId</code> for fast queries</li>
+</ul>
+<hr>
+<h2 id="heading-14">🔒 Security Best Practices</h2><h3 id="heading-15">✅ Always Verify Ownership</h3><pre><code class="language-javascript">// ❌ BAD - Anyone can delete any post
+app.delete(&#39;/api/posts/:postId&#39;, auth.middleware(), async (req, res) =&gt; {
+  await pool.execute(&#39;DELETE FROM posts WHERE id = ?&#39;, [req.params.postId]);
+});
+
+// ✅ GOOD - Only owner can delete
+app.delete(&#39;/api/posts/:postId&#39;, auth.middleware(), async (req, res) =&gt; {
+  const userId = req.user.userId;
+  const result = await pool.execute(
+    &#39;DELETE FROM posts WHERE id = ? AND userId = ?&#39;,
+    [req.params.postId, userId]
+  );
+  
+  if (result.affectedRows === 0) {
+    return res.status(403).json({ error: &#39;Unauthorized&#39; });
+  }
+});
+</code></pre>
+<h3 id="heading-16">✅ Use Parameterized Queries</h3><pre><code class="language-javascript">// ❌ BAD - SQL Injection vulnerability
+const [posts] = await pool.execute(
+  `SELECT * FROM posts WHERE userId = ${userId}`
+);
+
+// ✅ GOOD - Safe from SQL injection
+const [posts] = await pool.execute(
+  &#39;SELECT * FROM posts WHERE userId = ?&#39;,
+  [userId]
+);
+</code></pre>
+<h3 id="heading-17">✅ Return Only Necessary Data</h3><pre><code class="language-javascript">// ❌ BAD - Exposing sensitive data
+const user = await auth.getUserById(userId);
+res.json({ user }); // Includes password hash!
+
+// ✅ GOOD - Select only public fields
+const { password, ...safeUser } = await auth.getUserById(userId);
+res.json({ user: safeUser });
+</code></pre>
+<hr>
+<h2 id="heading-18">🎨 Advanced Patterns</h2><h3 id="heading-19">Pattern 1: Middleware to Load User Data</h3><pre><code class="language-javascript">// Middleware to automatically load user
+const loadUserData = async (req, res, next) =&gt; {
+  try {
+    req.currentUser = await auth.getUserById(req.user.userId);
+    next();
+  } catch (error) {
+    res.status(500).json({ error: &#39;Failed to load user&#39; });
+  }
+};
+
+// Use it
+app.get(&#39;/api/dashboard&#39;, 
+  auth.middleware(), 
+  loadUserData, 
+  async (req, res) =&gt; {
+    // req.currentUser has full user object
+    res.json({ user: req.currentUser });
+  }
+);
+</code></pre>
+<h3 id="heading-20">Pattern 2: Optional Authentication</h3><pre><code class="language-javascript">// Middleware for optional auth
+const optionalAuth = async (req, res, next) =&gt; {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader &amp;&amp; authHeader.startsWith(&#39;Bearer &#39;)) {
+      const token = authHeader.substring(7);
+      req.user = await auth.verifyAccessToken(token);
+    }
+  } catch (error) {
+    // Ignore auth errors for optional auth
+  }
+  next();
+};
+
+// Use it
+app.get(&#39;/api/posts&#39;, optionalAuth, async (req, res) =&gt; {
+  const pool = auth.db.getPool();
+  
+  if (req.user) {
+    // Show user&#39;s posts + public posts
+    const [posts] = await pool.execute(
+      &#39;SELECT * FROM posts WHERE userId = ? OR isPublic = 1&#39;,
+      [req.user.userId]
+    );
+  } else {
+    // Show only public posts
+    const [posts] = await pool.execute(
+      &#39;SELECT * FROM posts WHERE isPublic = 1&#39;
+    );
+  }
+  
+  res.json({ posts });
+});
+</code></pre>
+<h3 id="heading-21">Pattern 3: Role-Based Access</h3><pre><code class="language-javascript">// Add role to user schema
+auth.addField({ 
+  name: &#39;role&#39;, 
+  type: &quot;ENUM(&#39;user&#39;, &#39;admin&#39;, &#39;moderator&#39;)&quot;,
+  defaultValue: &#39;user&#39;
+});
+
+// Role checker middleware
+const requireRole = (role) =&gt; {
+  return async (req, res, next) =&gt; {
+    const user = await auth.getUserById(req.user.userId);
+    
+    if (user.role !== role) {
+      return res.status(403).json({ error: &#39;Insufficient permissions&#39; });
+    }
+    
+    next();
+  };
+};
+
+// Admin-only route
+app.get(&#39;/api/admin/all-posts&#39;, 
+  auth.middleware(), 
+  requireRole(&#39;admin&#39;),
+  async (req, res) =&gt; {
+    const pool = auth.db.getPool();
+    const [posts] = await pool.execute(&#39;SELECT * FROM posts&#39;);
+    res.json({ posts });
+  }
+);
+</code></pre>
+<hr>
+<h2 id="heading-22">🧪 Testing with curl</h2><h3 id="heading-23">Complete Test Flow</h3><pre><code class="language-bash"># 1. Register
+curl -X POST http://localhost:3000/auth/register \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;email&quot;:&quot;test@example.com&quot;,&quot;password&quot;:&quot;SecurePass123!&quot;}&#39;
+
+# Save the access token from response
+TOKEN=&quot;your_access_token_here&quot;
+
+# 2. Create post
+curl -X POST http://localhost:3000/api/posts \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;title&quot;:&quot;Test Post&quot;,&quot;content&quot;:&quot;Hello!&quot;}&#39;
+
+# 3. Get your posts
+curl -X GET http://localhost:3000/api/posts/my-posts \
+  -H &quot;Authorization: Bearer $TOKEN&quot;
+
+# 4. Update post (replace :postId with actual ID)
+curl -X PATCH http://localhost:3000/api/posts/1 \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;title&quot;:&quot;Updated Title&quot;}&#39;
+
+# 5. Delete post
+curl -X DELETE http://localhost:3000/api/posts/1 \
+  -H &quot;Authorization: Bearer $TOKEN&quot;
+</code></pre>
+<hr>
+<h2 id="heading-24">📱 Frontend Integration</h2><h3 id="heading-25">JavaScript/Fetch Example</h3><pre><code class="language-javascript">// Store tokens after login
+const login = async (email, password) =&gt; {
+  const response = await fetch(&#39;http://localhost:3000/auth/login&#39;, {
+    method: &#39;POST&#39;,
+    headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+    body: JSON.stringify({ email, password })
+  });
+  
+  const data = await response.json();
+  
+  // Save tokens
+  localStorage.setItem(&#39;accessToken&#39;, data.data.tokens.accessToken);
+  localStorage.setItem(&#39;refreshToken&#39;, data.data.tokens.refreshToken);
+  
+  return data;
+};
+
+// Get user&#39;s posts
+const getMyPosts = async () =&gt; {
+  const token = localStorage.getItem(&#39;accessToken&#39;);
+  
+  const response = await fetch(&#39;http://localhost:3000/api/posts/my-posts&#39;, {
+    headers: {
+      &#39;Authorization&#39;: `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// Create post
+const createPost = async (title, content) =&gt; {
+  const token = localStorage.getItem(&#39;accessToken&#39;);
+  
+  const response = await fetch(&#39;http://localhost:3000/api/posts&#39;, {
+    method: &#39;POST&#39;,
+    headers: {
+      &#39;Authorization&#39;: `Bearer ${token}`,
+      &#39;Content-Type&#39;: &#39;application/json&#39;
+    },
+    body: JSON.stringify({ title, content })
+  });
+  
+  return await response.json();
+};
+</code></pre>
+<hr>
+<h2 id="heading-26">🎯 Summary</h2><p><strong>Key Takeaways:</strong></p>
+<ol>
+<li>✅ Use <code>auth.middleware()</code> to protect routes</li>
+<li>✅ Access user ID via <code>req.user.userId</code></li>
+<li>✅ Always verify ownership before modify/delete</li>
+<li>✅ Use parameterized queries for security</li>
+<li>✅ Link user data with foreign keys</li>
+<li>✅ Return only necessary data</li>
+</ol>
+<p><strong>The authenticated user is available in <code>req.user</code> on all protected routes!</strong></p>
+<hr>
+<h2 id="heading-27">🚀 Run the Example</h2><pre><code class="language-bash"># Run the complete example
+node examples/user-posts-example.js
+
+# Test it
+curl http://localhost:3000/auth/register -X POST \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;email&quot;:&quot;test@example.com&quot;,&quot;password&quot;:&quot;SecurePass123!&quot;}&#39;
+</code></pre>
+<p>Happy coding! 🎉</p>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="QUICK_REFERENCE_USER_DATA.html" class="nav-button-outline">
+        <i class="fas fa-arrow-left"></i>
+        <span>User Data Reference</span>
+      </a>
+      <a href="SECURITY_AUDIT_REPORT.html" class="nav-button">
+        <span>Security Audit Report</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>

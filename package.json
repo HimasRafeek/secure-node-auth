@@ -1,0 +1,83 @@
+{
+  "name": "secure-node-auth",
+  "version": "1.0.0",
+  "description": "Blazing fast, zero-config MySQL authentication system with JWT. Set up secure auth in seconds with auto-schema setup and extensible custom fields.",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "src/",
+    "examples/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "INSTALLATION.md"
+  ],
+  "keywords": [
+    "authentication",
+    "mysql",
+    "jwt",
+    "auth",
+    "security",
+    "express",
+    "mysql2",
+    "login",
+    "register",
+    "token",
+    "refresh-token",
+    "bcrypt",
+    "zero-config",
+    "auto-setup"
+  ],
+  "author": "Himas Rafeek <contact@himasrafeek.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HimasRafeek/secure-node-auth.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HimasRafeek/secure-node-auth/issues"
+  },
+  "homepage": "https://github.com/HimasRafeek/secure-node-auth#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "test": "jest --coverage",
+    "qa": "node qa-test.js",
+    "docs": "node docs-server.js",
+    "generate-docs": "node generate-docs.js",
+    "example": "node examples/basic-usage.js",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write \"src/**/*.js\""
+  },
+  "dependencies": {
+    "@fastify/rate-limit": "^9.1.0",
+    "bcrypt": "^5.1.1",
+    "express-rate-limit": "^7.4.0",
+    "express-validator": "^7.2.0",
+    "fastify": "^4.21.0",
+    "fastify-plugin": "^4.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "marked": "^17.0.0",
+    "mysql2": "^3.11.0",
+    "nodemailer": "^6.9.7",
+    "validator": "^13.12.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "express": "^4.19.2",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3"
+  },
+  "optionalDependencies": {
+    "ioredis": "^5.4.1",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0"
+  },
+  "peerDependencies": {
+    "express": "^4.0.0 || ^5.0.0"
+  }
+}

@@ -1,0 +1,1445 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Headless Apps Authentication Part 1 - Secure Node Auth</title>
+    <meta name="description" content="Build secure authentication for headless applications with React, Vue, Angular, or mobile apps. Part 1 of 3." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Headless Apps Authentication Part 1 - Secure Node Auth" />
+    <meta property="og:description" content="Build secure authentication for headless applications with React, Vue, Angular, or mobile apps. Part 1 of 3." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Headless Apps Authentication Part 1 - Secure Node Auth" />
+    <meta name="twitter:description" content="Build secure authentication for headless applications with React, Vue, Angular, or mobile apps. Part 1 of 3." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      Building Headless Apps with SecureNodeAuth
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      Complete Guide: Income/Expense Tracker Example
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-2">
+      Architecture Overview
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-3">
+      Headless Architecture
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-4">
+      Key Concepts
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-5">
+      Database Schema Design
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-6">
+      Income/Expense Tracker Schema
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-7">
+      Backend Setup
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-8">
+      Project Structure
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-9">
+      1. Install Dependencies
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-10">
+      2. Environment Configuration (.env)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-11">
+      3. Main Server File (src/index.js)
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-12">
+      API Endpoints
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-13">
+      4. Auth Routes (src/routes/auth.js)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-14">
+      5. Transaction Routes (src/routes/transactions.js)
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">Building Headless Apps with SecureNodeAuth</h1><h2 id="heading-1">Complete Guide: Income/Expense Tracker Example</h2><p>This guide demonstrates how to use SecureNodeAuth as a secure authentication layer for complex headless applications with custom database schemas.</p>
+<hr>
+<h2 id="heading-2">Architecture Overview</h2><h3 id="heading-3">Headless Architecture</h3><pre><code>┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│  Frontend App   │ ◄─────► │  Node.js API    │ ◄─────► │  MySQL Database │
+│  (React/Vue)    │  REST   │  + SecureNode   │   SQL   │  (Your Schema)  │
+│  Mobile App     │  JSON   │                 │         │                 │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+</code></pre>
+<h3 id="heading-4">Key Concepts</h3><ul>
+<li><strong>SecureNodeAuth</strong>: Handles authentication only (users, tokens, login)</li>
+<li><strong>Your Tables</strong>: Store application data (transactions, categories, budgets)</li>
+<li><strong>User Association</strong>: Link your data to authenticated users via <code>userId</code></li>
+</ul>
+<hr>
+<h2 id="heading-5">Database Schema Design</h2><h3 id="heading-6">Income/Expense Tracker Schema</h3><pre><code class="language-sql">-- SecureNodeAuth creates these tables automatically:
+-- secure_auth_users (id, email, password, firstName, lastName, ...)
+-- secure_auth_refresh_tokens
+-- secure_auth_login_attempts
+
+-- YOUR APPLICATION TABLES:
+
+-- Categories (Income/Expense types)
+CREATE TABLE categories (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  type ENUM(&#39;income&#39;, &#39;expense&#39;) NOT NULL,
+  color VARCHAR(7) DEFAULT &#39;#000000&#39;,
+  icon VARCHAR(50),
+  isActive BOOLEAN DEFAULT TRUE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+  INDEX idx_userId_type (userId, type),
+  INDEX idx_active (userId, isActive)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Accounts (Bank accounts, wallets, credit cards)
+CREATE TABLE accounts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  type ENUM(&#39;checking&#39;, &#39;savings&#39;, &#39;credit_card&#39;, &#39;cash&#39;, &#39;investment&#39;) NOT NULL,
+  balance DECIMAL(15, 2) DEFAULT 0.00,
+  currency VARCHAR(3) DEFAULT &#39;USD&#39;,
+  isActive BOOLEAN DEFAULT TRUE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+  INDEX idx_userId_active (userId, isActive)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Transactions (Income/Expense records)
+CREATE TABLE transactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  accountId INT NOT NULL,
+  categoryId INT NOT NULL,
+  amount DECIMAL(15, 2) NOT NULL,
+  type ENUM(&#39;income&#39;, &#39;expense&#39;, &#39;transfer&#39;) NOT NULL,
+  description TEXT,
+  transactionDate DATE NOT NULL,
+  tags JSON,
+  receiptUrl VARCHAR(255),
+  isRecurring BOOLEAN DEFAULT FALSE,
+  recurringId INT,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (accountId) REFERENCES accounts(id) ON DELETE CASCADE,
+  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE RESTRICT,
+  INDEX idx_userId_date (userId, transactionDate),
+  INDEX idx_userId_type (userId, type),
+  INDEX idx_account (accountId),
+  INDEX idx_category (categoryId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Budgets (Monthly spending limits)
+CREATE TABLE budgets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  categoryId INT NOT NULL,
+  amount DECIMAL(15, 2) NOT NULL,
+  period ENUM(&#39;daily&#39;, &#39;weekly&#39;, &#39;monthly&#39;, &#39;yearly&#39;) DEFAULT &#39;monthly&#39;,
+  startDate DATE NOT NULL,
+  endDate DATE,
+  alertThreshold INT DEFAULT 80, -- Alert at 80% of budget
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE CASCADE,
+  INDEX idx_userId_period (userId, period),
+  UNIQUE KEY unique_user_category_period (userId, categoryId, period, startDate)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Recurring Transactions Template
+CREATE TABLE recurring_transactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  accountId INT NOT NULL,
+  categoryId INT NOT NULL,
+  amount DECIMAL(15, 2) NOT NULL,
+  type ENUM(&#39;income&#39;, &#39;expense&#39;) NOT NULL,
+  description TEXT,
+  frequency ENUM(&#39;daily&#39;, &#39;weekly&#39;, &#39;biweekly&#39;, &#39;monthly&#39;, &#39;yearly&#39;) NOT NULL,
+  startDate DATE NOT NULL,
+  endDate DATE,
+  nextDueDate DATE NOT NULL,
+  isActive BOOLEAN DEFAULT TRUE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (accountId) REFERENCES accounts(id) ON DELETE CASCADE,
+  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE RESTRICT,
+  INDEX idx_userId_active (userId, isActive),
+  INDEX idx_nextDue (nextDueDate)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- User Preferences
+CREATE TABLE user_preferences (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL UNIQUE,
+  defaultCurrency VARCHAR(3) DEFAULT &#39;USD&#39;,
+  defaultAccount INT,
+  weekStartDay ENUM(&#39;sunday&#39;, &#39;monday&#39;) DEFAULT &#39;sunday&#39;,
+  dateFormat VARCHAR(20) DEFAULT &#39;MM/DD/YYYY&#39;,
+  timezone VARCHAR(50) DEFAULT &#39;UTC&#39;,
+  notifications JSON, -- {email: true, push: false, ...}
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+</code></pre>
+<hr>
+<h2 id="heading-7">Backend Setup</h2><h3 id="heading-8">Project Structure</h3><pre><code>expense-tracker-api/
+├── src/
+│   ├── index.js                 # Main server file
+│   ├── config/
+│   │   └── database.js          # Database configuration
+│   ├── middleware/
+│   │   └── auth.js              # SecureNodeAuth middleware
+│   ├── models/
+│   │   ├── Transaction.js       # Transaction model
+│   │   ├── Category.js          # Category model
+│   │   ├── Account.js           # Account model
+│   │   └── Budget.js            # Budget model
+│   ├── routes/
+│   │   ├── auth.js              # Auth routes (SecureNodeAuth)
+│   │   ├── transactions.js      # Transaction endpoints
+│   │   ├── categories.js        # Category endpoints
+│   │   ├── accounts.js          # Account endpoints
+│   │   └── budgets.js           # Budget endpoints
+│   └── utils/
+│       ├── database.js          # Database utilities
+│       └── validation.js        # Input validation
+├── .env
+├── package.json
+└── README.md
+</code></pre>
+<h3 id="heading-9">1. Install Dependencies</h3><pre><code class="language-bash">npm init -y
+npm install express dotenv cors mysql2 secure-node-auth
+npm install --save-dev nodemon
+</code></pre>
+<h3 id="heading-10">2. Environment Configuration (.env)</h3><pre><code class="language-env"># Server
+PORT=3000
+NODE_ENV=development
+
+# Database
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=expense_tracker
+
+# JWT Secrets (Generate strong secrets!)
+JWT_ACCESS_SECRET=your_super_secret_access_key_min_32_chars_long_12345678
+JWT_REFRESH_SECRET=your_super_secret_refresh_key_min_32_chars_different_87654321
+
+# Security
+BCRYPT_ROUNDS=12
+MAX_LOGIN_ATTEMPTS=5
+LOCKOUT_TIME=900000
+
+# CORS
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+</code></pre>
+<h3 id="heading-11">3. Main Server File (src/index.js)</h3><pre><code class="language-javascript">require(&#39;dotenv&#39;).config();
+const express = require(&#39;express&#39;);
+const cors = require(&#39;cors&#39;);
+const SecureNodeAuth = require(&#39;secure-node-auth&#39;);
+const mysql = require(&#39;mysql2/promise&#39;);
+
+// Import routes
+const authRoutes = require(&#39;./routes/auth&#39;);
+const transactionRoutes = require(&#39;./routes/transactions&#39;);
+const categoryRoutes = require(&#39;./routes/categories&#39;);
+const accountRoutes = require(&#39;./routes/accounts&#39;);
+const budgetRoutes = require(&#39;./routes/budgets&#39;);
+
+const app = express();
+
+// Middleware
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(&#39;,&#39;) || &#39;*&#39;,
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Database pool for application queries (separate from SecureNodeAuth)
+const appPool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
+
+// Make pool available to routes
+app.set(&#39;dbPool&#39;, appPool);
+
+// Initialize SecureNodeAuth
+const auth = new SecureNodeAuth({
+  db: {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  },
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    accessExpiresIn: &#39;15m&#39;,
+    refreshExpiresIn: &#39;7d&#39;,
+  },
+  security: {
+    bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS) || 12,
+    maxLoginAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS) || 5,
+    lockoutTime: parseInt(process.env.LOCKOUT_TIME) || 900000,
+  },
+  // Custom audit logger
+  auditLogger: (event, data) =&gt; {
+    const timestamp = new Date().toISOString();
+    console.log(
+      `[AUDIT] ${timestamp} - ${event}`,
+      JSON.stringify({
+        ...data,
+        environment: process.env.NODE_ENV,
+      })
+    );
+
+    // In production, send to logging service (Winston, CloudWatch, etc.)
+  },
+});
+
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Initialize SecureNodeAuth (creates auth tables)
+    await auth.init();
+    console.log(&#39;✓ SecureNodeAuth initialized&#39;);
+
+    // Create application tables
+    await createApplicationTables(appPool);
+    console.log(&#39;✓ Application tables created&#39;);
+
+    // Make auth instance available to routes
+    app.set(&#39;auth&#39;, auth);
+
+    // Health check
+    app.get(&#39;/health&#39;, (req, res) =&gt; {
+      res.json({
+        status: &#39;healthy&#39;,
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV,
+      });
+    });
+
+    // Mount routes
+    app.use(&#39;/api/auth&#39;, authRoutes(auth));
+    app.use(&#39;/api/transactions&#39;, auth.middleware(), transactionRoutes);
+    app.use(&#39;/api/categories&#39;, auth.middleware(), categoryRoutes);
+    app.use(&#39;/api/accounts&#39;, auth.middleware(), accountRoutes);
+    app.use(&#39;/api/budgets&#39;, auth.middleware(), budgetRoutes);
+
+    // Error handling middleware
+    app.use((err, req, res, next) =&gt; {
+      console.error(&#39;Error:&#39;, err);
+      res.status(err.status || 500).json({
+        success: false,
+        error: process.env.NODE_ENV === &#39;production&#39; ? &#39;Internal server error&#39; : err.message,
+      });
+    });
+
+    // 404 handler
+    app.use((req, res) =&gt; {
+      res.status(404).json({
+        success: false,
+        error: &#39;Route not found&#39;,
+      });
+    });
+
+    // Start server
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () =&gt; {
+      console.log(`\n🚀 Server running on port ${PORT}`);
+      console.log(`📍 API: http://localhost:${PORT}/api`);
+      console.log(`🔒 Auth: http://localhost:${PORT}/api/auth`);
+      console.log(`💰 Transactions: http://localhost:${PORT}/api/transactions`);
+    });
+  } catch (error) {
+    console.error(&#39;Failed to start server:&#39;, error);
+    process.exit(1);
+  }
+}
+
+// Create application tables
+async function createApplicationTables(pool) {
+  const connection = await pool.getConnection();
+
+  try {
+    // Categories table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        type ENUM(&#39;income&#39;, &#39;expense&#39;) NOT NULL,
+        color VARCHAR(7) DEFAULT &#39;#000000&#39;,
+        icon VARCHAR(50),
+        isActive BOOLEAN DEFAULT TRUE,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+        INDEX idx_userId_type (userId, type),
+        INDEX idx_active (userId, isActive)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    // Accounts table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS accounts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        type ENUM(&#39;checking&#39;, &#39;savings&#39;, &#39;credit_card&#39;, &#39;cash&#39;, &#39;investment&#39;) NOT NULL,
+        balance DECIMAL(15, 2) DEFAULT 0.00,
+        currency VARCHAR(3) DEFAULT &#39;USD&#39;,
+        isActive BOOLEAN DEFAULT TRUE,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+        INDEX idx_userId_active (userId, isActive)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    // Transactions table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NOT NULL,
+        accountId INT NOT NULL,
+        categoryId INT NOT NULL,
+        amount DECIMAL(15, 2) NOT NULL,
+        type ENUM(&#39;income&#39;, &#39;expense&#39;, &#39;transfer&#39;) NOT NULL,
+        description TEXT,
+        transactionDate DATE NOT NULL,
+        tags JSON,
+        receiptUrl VARCHAR(255),
+        isRecurring BOOLEAN DEFAULT FALSE,
+        recurringId INT,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+        FOREIGN KEY (accountId) REFERENCES accounts(id) ON DELETE CASCADE,
+        FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE RESTRICT,
+        INDEX idx_userId_date (userId, transactionDate),
+        INDEX idx_userId_type (userId, type),
+        INDEX idx_account (accountId),
+        INDEX idx_category (categoryId)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    // Budgets table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS budgets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NOT NULL,
+        categoryId INT NOT NULL,
+        amount DECIMAL(15, 2) NOT NULL,
+        period ENUM(&#39;daily&#39;, &#39;weekly&#39;, &#39;monthly&#39;, &#39;yearly&#39;) DEFAULT &#39;monthly&#39;,
+        startDate DATE NOT NULL,
+        endDate DATE,
+        alertThreshold INT DEFAULT 80,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+        FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE CASCADE,
+        INDEX idx_userId_period (userId, period),
+        UNIQUE KEY unique_user_category_period (userId, categoryId, period, startDate)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    // User preferences table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user_preferences (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NOT NULL UNIQUE,
+        defaultCurrency VARCHAR(3) DEFAULT &#39;USD&#39;,
+        defaultAccount INT,
+        weekStartDay ENUM(&#39;sunday&#39;, &#39;monday&#39;) DEFAULT &#39;sunday&#39;,
+        dateFormat VARCHAR(20) DEFAULT &#39;MM/DD/YYYY&#39;,
+        timezone VARCHAR(50) DEFAULT &#39;UTC&#39;,
+        notifications JSON,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+  } finally {
+    connection.release();
+  }
+}
+
+// Graceful shutdown
+process.on(&#39;SIGTERM&#39;, async () =&gt; {
+  console.log(&#39;\n🛑 SIGTERM received, closing server gracefully...&#39;);
+  await auth.close();
+  await appPool.end();
+  process.exit(0);
+});
+
+process.on(&#39;SIGINT&#39;, async () =&gt; {
+  console.log(&#39;\n🛑 SIGINT received, closing server gracefully...&#39;);
+  await auth.close();
+  await appPool.end();
+  process.exit(0);
+});
+
+startServer();
+</code></pre>
+<hr>
+<h2 id="heading-12">API Endpoints</h2><h3 id="heading-13">4. Auth Routes (src/routes/auth.js)</h3><pre><code class="language-javascript">const express = require(&#39;express&#39;);
+
+module.exports = function (auth) {
+  const router = express.Router();
+
+  // Use SecureNodeAuth&#39;s built-in routes
+  router.use(&#39;/&#39;, auth.router());
+
+  // Add custom post-registration logic
+  router.post(&#39;/register-complete&#39;, auth.middleware(), async (req, res) =&gt; {
+    try {
+      const userId = req.user.userId;
+      const pool = req.app.get(&#39;dbPool&#39;);
+
+      // Create default categories for new user
+      await pool.execute(
+        `
+        INSERT INTO categories (userId, name, type, color, icon) VALUES
+        (?, &#39;Salary&#39;, &#39;income&#39;, &#39;#4CAF50&#39;, &#39;money&#39;),
+        (?, &#39;Freelance&#39;, &#39;income&#39;, &#39;#8BC34A&#39;, &#39;briefcase&#39;),
+        (?, &#39;Food &amp; Dining&#39;, &#39;expense&#39;, &#39;#FF5722&#39;, &#39;utensils&#39;),
+        (?, &#39;Transportation&#39;, &#39;expense&#39;, &#39;#2196F3&#39;, &#39;car&#39;),
+        (?, &#39;Shopping&#39;, &#39;expense&#39;, &#39;#9C27B0&#39;, &#39;shopping-cart&#39;),
+        (?, &#39;Bills &amp; Utilities&#39;, &#39;expense&#39;, &#39;#FF9800&#39;, &#39;file-invoice&#39;),
+        (?, &#39;Healthcare&#39;, &#39;expense&#39;, &#39;#F44336&#39;, &#39;heartbeat&#39;),
+        (?, &#39;Entertainment&#39;, &#39;expense&#39;, &#39;#E91E63&#39;, &#39;film&#39;)
+      `,
+        [userId, userId, userId, userId, userId, userId, userId, userId]
+      );
+
+      // Create default account
+      const [result] = await pool.execute(
+        &#39;INSERT INTO accounts (userId, name, type, balance) VALUES (?, ?, ?, ?)&#39;,
+        [userId, &#39;Main Account&#39;, &#39;checking&#39;, 0]
+      );
+
+      // Create user preferences
+      await pool.execute(
+        `
+        INSERT INTO user_preferences (userId, defaultAccount) VALUES (?, ?)
+      `,
+        [userId, result.insertId]
+      );
+
+      res.json({
+        success: true,
+        message: &#39;Account setup completed&#39;,
+      });
+    } catch (error) {
+      console.error(&#39;Setup error:&#39;, error);
+      res.status(500).json({
+        success: false,
+        error: &#39;Failed to complete account setup&#39;,
+      });
+    }
+  });
+
+  return router;
+};
+</code></pre>
+<h3 id="heading-14">5. Transaction Routes (src/routes/transactions.js)</h3><pre><code class="language-javascript">const express = require(&#39;express&#39;);
+const router = express.Router();
+
+// Get all transactions for user
+router.get(&#39;/&#39;, async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const pool = req.app.get(&#39;dbPool&#39;);
+
+    const { startDate, endDate, type, categoryId, accountId, page = 1, limit = 50 } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = `
+      SELECT 
+        t.id,
+        t.amount,
+        t.type,
+        t.description,
+        t.transactionDate,
+        t.tags,
+        t.receiptUrl,
+        t.createdAt,
+        a.name AS accountName,
+        a.type AS accountType,
+        c.name AS categoryName,
+        c.color AS categoryColor,
+        c.icon AS categoryIcon
+      FROM transactions t
+      JOIN accounts a ON t.accountId = a.id
+      JOIN categories c ON t.categoryId = c.id
+      WHERE t.userId = ?
+    `;
+
+    const params = [userId];
+
+    // Add filters
+    if (startDate) {
+      query += &#39; AND t.transactionDate &gt;= ?&#39;;
+      params.push(startDate);
+    }
+    if (endDate) {
+      query += &#39; AND t.transactionDate &lt;= ?&#39;;
+      params.push(endDate);
+    }
+    if (type) {
+      query += &#39; AND t.type = ?&#39;;
+      params.push(type);
+    }
+    if (categoryId) {
+      query += &#39; AND t.categoryId = ?&#39;;
+      params.push(categoryId);
+    }
+    if (accountId) {
+      query += &#39; AND t.accountId = ?&#39;;
+      params.push(accountId);
+    }
+
+    query += &#39; ORDER BY t.transactionDate DESC, t.createdAt DESC LIMIT ? OFFSET ?&#39;;
+    params.push(parseInt(limit), parseInt(offset));
+
+    const [transactions] = await pool.execute(query, params);
+
+    // Get total count
+    let countQuery = &#39;SELECT COUNT(*) as total FROM transactions WHERE userId = ?&#39;;
+    const countParams = [userId];
+
+    if (startDate) {
+      countQuery += &#39; AND transactionDate &gt;= ?&#39;;
+      countParams.push(startDate);
+    }
+    if (endDate) {
+      countQuery += &#39; AND transactionDate &lt;= ?&#39;;
+      countParams.push(endDate);
+    }
+    if (type) {
+      countQuery += &#39; AND type = ?&#39;;
+      countParams.push(type);
+    }
+    if (categoryId) {
+      countQuery += &#39; AND categoryId = ?&#39;;
+      countParams.push(categoryId);
+    }
+    if (accountId) {
+      countQuery += &#39; AND accountId = ?&#39;;
+      countParams.push(accountId);
+    }
+
+    const [countResult] = await pool.execute(countQuery, countParams);
+
+    res.json({
+      success: true,
+      data: {
+        transactions,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: countResult[0].total,
+          totalPages: Math.ceil(countResult[0].total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error(&#39;Get transactions error:&#39;, error);
+    res.status(500).json({
+      success: false,
+      error: &#39;Failed to fetch transactions&#39;,
+    });
+  }
+});
+
+// Get transaction by ID
+router.get(&#39;/:id&#39;, async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const pool = req.app.get(&#39;dbPool&#39;);
+
+    const [transactions] = await pool.execute(
+      `
+      SELECT 
+        t.*,
+        a.name AS accountName,
+        c.name AS categoryName,
+        c.color AS categoryColor
+      FROM transactions t
+      JOIN accounts a ON t.accountId = a.id
+      JOIN categories c ON t.categoryId = c.id
+      WHERE t.id = ? AND t.userId = ?
+    `,
+      [id, userId]
+    );
+
+    if (transactions.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: &#39;Transaction not found&#39;,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: transactions[0],
+    });
+  } catch (error) {
+    console.error(&#39;Get transaction error:&#39;, error);
+    res.status(500).json({
+      success: false,
+      error: &#39;Failed to fetch transaction&#39;,
+    });
+  }
+});
+
+// Create transaction
+router.post(&#39;/&#39;, async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const { accountId, categoryId, amount, type, description, transactionDate, tags } = req.body;
+    const pool = req.app.get(&#39;dbPool&#39;);
+
+    // Validation
+    if (!accountId || !categoryId || !amount || !type || !transactionDate) {
+      return res.status(400).json({
+        success: false,
+        error: &#39;Missing required fields&#39;,
+      });
+    }
+
+    // Verify account belongs to user
+    const [accounts] = await pool.execute(&#39;SELECT id FROM accounts WHERE id = ? AND userId = ?&#39;, [
+      accountId,
+      userId,
+    ]);
+
+    if (accounts.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: &#39;Account not found or access denied&#39;,
+      });
+    }
+
+    // Verify category belongs to user
+    const [categories] = await pool.execute(
+      &#39;SELECT id FROM categories WHERE id = ? AND userId = ?&#39;,
+      [categoryId, userId]
+    );
+
+    if (categories.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: &#39;Category not found or access denied&#39;,
+      });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // Insert transaction
+      const [result] = await connection.execute(
+        `
+        INSERT INTO transactions 
+        (userId, accountId, categoryId, amount, type, description, transactionDate, tags)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          userId,
+          accountId,
+          categoryId,
+          amount,
+          type,
+          description,
+          transactionDate,
+          tags ? JSON.stringify(tags) : null,
+        ]
+      );
+
+      // Update account balance
+      const balanceChange = type === &#39;income&#39; ? amount : -amount;
+      await connection.execute(&#39;UPDATE accounts SET balance = balance + ? WHERE id = ?&#39;, [
+        balanceChange,
+        accountId,
+      ]);
+
+      await connection.commit();
+
+      // Fetch created transaction with details
+      const [newTransaction] = await pool.execute(
+        `
+        SELECT 
+          t.*,
+          a.name AS accountName,
+          c.name AS categoryName,
+          c.color AS categoryColor
+        FROM transactions t
+        JOIN accounts a ON t.accountId = a.id
+        JOIN categories c ON t.categoryId = c.id
+        WHERE t.id = ?
+      `,
+        [result.insertId]
+      );
+
+      res.status(201).json({
+        success: true,
+        message: &#39;Transaction created successfully&#39;,
+        data: newTransaction[0],
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error(&#39;Create transaction error:&#39;, error);
+    res.status(500).json({
+      success: false,
+      error: &#39;Failed to create transaction&#39;,
+    });
+  }
+});
+
+// Update transaction
+router.put(&#39;/:id&#39;, async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const { accountId, categoryId, amount, type, description, transactionDate, tags } = req.body;
+    const pool = req.app.get(&#39;dbPool&#39;);
+
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // Get old transaction
+      const [oldTransaction] = await connection.execute(
+        &#39;SELECT * FROM transactions WHERE id = ? AND userId = ?&#39;,
+        [id, userId]
+      );
+
+      if (oldTransaction.length === 0) {
+        await connection.rollback();
+        return res.status(404).json({
+          success: false,
+          error: &#39;Transaction not found&#39;,
+        });
+      }
+
+      const old = oldTransaction[0];
+
+      // Revert old balance change
+      const oldBalanceChange = old.type === &#39;income&#39; ? -old.amount : old.amount;
+      await connection.execute(&#39;UPDATE accounts SET balance = balance + ? WHERE id = ?&#39;, [
+        oldBalanceChange,
+        old.accountId,
+      ]);
+
+      // Update transaction
+      await connection.execute(
+        `
+        UPDATE transactions 
+        SET accountId = ?, categoryId = ?, amount = ?, type = ?, 
+            description = ?, transactionDate = ?, tags = ?
+        WHERE id = ? AND userId = ?
+      `,
+        [
+          accountId,
+          categoryId,
+          amount,
+          type,
+          description,
+          transactionDate,
+          tags ? JSON.stringify(tags) : null,
+          id,
+          userId,
+        ]
+      );
+
+      // Apply new balance change
+      const newBalanceChange = type === &#39;income&#39; ? amount : -amount;
+      await connection.execute(&#39;UPDATE accounts SET balance = balance + ? WHERE id = ?&#39;, [
+        newBalanceChange,
+        accountId,
+      ]);
+
+      await connection.commit();
+
+      // Fetch updated transaction
+      const [updated] = await pool.execute(
+        `
+        SELECT 
+          t.*,
+          a.name AS accountName,
+          c.name AS categoryName,
+          c.color AS categoryColor
+        FROM transactions t
+        JOIN accounts a ON t.accountId = a.id
+        JOIN categories c ON t.categoryId = c.id
+        WHERE t.id = ?
+      `,
+        [id]
+      );
+
+      res.json({
+        success: true,
+        message: &#39;Transaction updated successfully&#39;,
+        data: updated[0],
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error(&#39;Update transaction error:&#39;, error);
+    res.status(500).json({
+      success: false,
+      error: &#39;Failed to update transaction&#39;,
+    });
+  }
+});
+
+// Delete transaction
+router.delete(&#39;/:id&#39;, async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const pool = req.app.get(&#39;dbPool&#39;);
+
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // Get transaction
+      const [transactions] = await connection.execute(
+        &#39;SELECT * FROM transactions WHERE id = ? AND userId = ?&#39;,
+        [id, userId]
+      );
+
+      if (transactions.length === 0) {
+        await connection.rollback();
+        return res.status(404).json({
+          success: false,
+          error: &#39;Transaction not found&#39;,
+        });
+      }
+
+      const transaction = transactions[0];
+
+      // Revert balance change
+      const balanceChange =
+        transaction.type === &#39;income&#39; ? -transaction.amount : transaction.amount;
+      await connection.execute(&#39;UPDATE accounts SET balance = balance + ? WHERE id = ?&#39;, [
+        balanceChange,
+        transaction.accountId,
+      ]);
+
+      // Delete transaction
+      await connection.execute(&#39;DELETE FROM transactions WHERE id = ? AND userId = ?&#39;, [
+        id,
+        userId,
+      ]);
+
+      await connection.commit();
+
+      res.json({
+        success: true,
+        message: &#39;Transaction deleted successfully&#39;,
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error(&#39;Delete transaction error:&#39;, error);
+    res.status(500).json({
+      success: false,
+      error: &#39;Failed to delete transaction&#39;,
+    });
+  }
+});
+
+// Get transaction summary/statistics
+router.get(&#39;/summary/stats&#39;, async (req, res) =&gt; {
+  try {
+    const userId = req.user.userId;
+    const { startDate, endDate, period = &#39;month&#39; } = req.query;
+    const pool = req.app.get(&#39;dbPool&#39;);
+
+    let dateFilter = &#39;&#39;;
+    const params = [userId];
+
+    if (startDate &amp;&amp; endDate) {
+      dateFilter = &#39;AND transactionDate BETWEEN ? AND ?&#39;;
+      params.push(startDate, endDate);
+    } else if (period === &#39;month&#39;) {
+      dateFilter =
+        &#39;AND YEAR(transactionDate) = YEAR(CURDATE()) AND MONTH(transactionDate) = MONTH(CURDATE())&#39;;
+    } else if (period === &#39;year&#39;) {
+      dateFilter = &#39;AND YEAR(transactionDate) = YEAR(CURDATE())&#39;;
+    }
+
+    // Total income and expenses
+    const [totals] = await pool.execute(
+      `
+      SELECT 
+        SUM(CASE WHEN type = &#39;income&#39; THEN amount ELSE 0 END) as totalIncome,
+        SUM(CASE WHEN type = &#39;expense&#39; THEN amount ELSE 0 END) as totalExpenses,
+        COUNT(*) as transactionCount
+      FROM transactions
+      WHERE userId = ? ${dateFilter}
+    `,
+      params
+    );
+
+    // By category
+    const [byCategory] = await pool.execute(
+      `
+      SELECT 
+        c.name,
+        c.color,
+        c.icon,
+        t.type,
+        SUM(t.amount) as total,
+        COUNT(*) as count
+      FROM transactions t
+      JOIN categories c ON t.categoryId = c.id
+      WHERE t.userId = ? ${dateFilter}
+      GROUP BY c.id, c.name, c.color, c.icon, t.type
+      ORDER BY total DESC
+    `,
+      params
+    );
+
+    // By account
+    const [byAccount] = await pool.execute(
+      `
+      SELECT 
+        a.name,
+        a.type,
+        a.balance,
+        SUM(CASE WHEN t.type = &#39;income&#39; THEN t.amount ELSE 0 END) as income,
+        SUM(CASE WHEN t.type = &#39;expense&#39; THEN t.amount ELSE 0 END) as expenses
+      FROM accounts a
+      LEFT JOIN transactions t ON a.id = t.accountId AND t.userId = ? ${dateFilter}
+      WHERE a.userId = ? AND a.isActive = TRUE
+      GROUP BY a.id, a.name, a.type, a.balance
+    `,
+      [...params, userId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        totals: {
+          income: parseFloat(totals[0].totalIncome) || 0,
+          expenses: parseFloat(totals[0].totalExpenses) || 0,
+          balance:
+            (parseFloat(totals[0].totalIncome) || 0) - (parseFloat(totals[0].totalExpenses) || 0),
+          transactionCount: totals[0].transactionCount,
+        },
+        byCategory,
+        byAccount,
+      },
+    });
+  } catch (error) {
+    console.error(&#39;Get summary error:&#39;, error);
+    res.status(500).json({
+      success: false,
+      error: &#39;Failed to fetch summary&#39;,
+    });
+  }
+});
+
+module.exports = router;
+</code></pre>
+<p>Continue in next response...</p>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="FASTIFY_GUIDE.html" class="nav-button-outline">
+        <i class="fas fa-arrow-left"></i>
+        <span>Fastify Guide</span>
+      </a>
+      <a href="HEADLESS_APPS_GUIDE_PART2.html" class="nav-button">
+        <span>Headless Apps (Part 2)</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>

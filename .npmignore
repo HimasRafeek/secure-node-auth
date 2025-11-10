@@ -1,0 +1,59 @@
+# Development and testing files
+qa-test.js
+docs-server.js
+generate-docs.js
+.env.example
+PREPUBLISH_CHECKLIST.md
+CLEANUP_SUMMARY.md
+
+# Audit reports
+AUDIT-REPORT.md
+AUDIT_ROUND_3.md
+AUDIT_SUMMARY.md
+EXPERT-PANEL-AUDIT.md
+PROJECT_SUMMARY.md
+CHANGES.md
+
+# Website (not needed in package)
+website/
+
+# Documentation source (keep compiled docs)
+docs/
+
+# Examples can be included for users
+# examples/
+
+# IDE and development
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tests
+coverage/
+*.test.js
+*.spec.js
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Other
+node_modules/
+.env
+.env.*

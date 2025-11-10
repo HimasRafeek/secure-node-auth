@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Verification - Secure Node Auth</title>
+    <meta name="description" content="Complete guide to implementing email verification with Secure Node Auth. Includes examples with Nodemailer and SendGrid." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Email Verification - Secure Node Auth" />
+    <meta property="og:description" content="Complete guide to implementing email verification with Secure Node Auth. Includes examples with Nodemailer and SendGrid." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Email Verification - Secure Node Auth" />
+    <meta name="twitter:description" content="Complete guide to implementing email verification with Secure Node Auth. Includes examples with Nodemailer and SendGrid." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      Email Verification & Password Reset Guide
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      📧 Features
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-2">
+      🚀 Quick Setup
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-3">
+      1. Install Package
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-4">
+      2. Configure SMTP in Environment Variables
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-5">
+      3. Initialize SecureNodeAuth with Email Support
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-6">
+      📨 SMTP Provider Configuration
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-7">
+      Gmail
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-8">
+      SendGrid
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-9">
+      Mailgun
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-10">
+      AWS SES
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-11">
+      Outlook/Office 365
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-12">
+      Development (Mailtrap)
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-13">
+      💻 Usage Examples
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-14">
+      1. Email Verification Flow
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-19">
+      2. Password Reset Flow
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-24">
+      🎨 Custom Email Templates
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-25">
+      🔒 Security Best Practices
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-26">
+      1. Token Expiration
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-27">
+      2. Secure Token Generation
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-28">
+      3. Don't Reveal User Existence
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-29">
+      4. HTTPS in Production
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-30">
+      5. Rate Limiting
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-31">
+      📊 Database Schema
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-32">
+      1. Users Table (Updated)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-33">
+      2. Verification Tokens Table (New)
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-34">
+      🧪 Testing
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-35">
+      Test SMTP Connection
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-36">
+      Send Test Email
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-37">
+      Manual Token Verification
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-38">
+      🚀 Using with Express Routes
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-39">
+      📋 API Endpoints Reference
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-40">
+      Send Verification Email
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-41">
+      Verify Email
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-42">
+      Resend Verification
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-43">
+      Forgot Password
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-44">
+      Reset Password
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-45">
+      🐛 Troubleshooting
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-46">
+      "Email service not configured"
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-47">
+      Emails not being received
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-48">
+      "Invalid or expired token"
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-49">
+      Gmail "Less secure apps" error
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-50">
+      🌟 Complete Example
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-51">
+      📚 Related Documentation
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">Email Verification & Password Reset Guide</h1><p>Complete guide for setting up SMTP email features in SecureNodeAuth, including email verification and password reset functionality.</p>
+<hr>
+<h2 id="heading-1">📧 Features</h2><p>✅ <strong>Email Verification</strong></p>
+<ul>
+<li>Send verification emails on registration</li>
+<li>Verify email with secure tokens</li>
+<li>Resend verification emails</li>
+<li>24-hour token expiration</li>
+</ul>
+<p>✅ <strong>Password Reset</strong></p>
+<ul>
+<li>Forgot password flow</li>
+<li>Secure reset tokens (1-hour expiration)</li>
+<li>Email-based password recovery</li>
+<li>Automatic token cleanup</li>
+</ul>
+<p>✅ <strong>Custom Email Templates</strong></p>
+<ul>
+<li>Beautiful HTML email templates</li>
+<li>Customizable branding</li>
+<li>Responsive design</li>
+</ul>
+<p>✅ <strong>SMTP Configuration</strong></p>
+<ul>
+<li>Support for any SMTP provider</li>
+<li>Gmail, SendGrid, Mailgun, AWS SES, etc.</li>
+<li>TLS/SSL support</li>
+</ul>
+<hr>
+<h2 id="heading-2">🚀 Quick Setup</h2><h3 id="heading-3">1. Install Package</h3><p>Already included in SecureNodeAuth! The <code>nodemailer</code> dependency is pre-installed.</p>
+<h3 id="heading-4">2. Configure SMTP in Environment Variables</h3><pre><code class="language-env"># Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=your_database
+
+# JWT Secrets
+JWT_ACCESS_SECRET=your-32-char-access-secret-here
+JWT_REFRESH_SECRET=your-32-char-refresh-secret-here
+
+# SMTP Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=noreply@yourapp.com
+
+# Frontend URLs
+VERIFICATION_URL=http://localhost:3000/verify-email
+PASSWORD_RESET_URL=http://localhost:3000/reset-password
+</code></pre>
+<h3 id="heading-5">3. Initialize SecureNodeAuth with Email Support</h3><pre><code class="language-javascript">const SecureNodeAuth = require(&#39;secure-node-auth&#39;);
+
+const auth = new SecureNodeAuth({
+  connection: {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+  },
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET
+  },
+  security: {
+    requireEmailVerification: false, // Set to true to enforce verification
+    bcryptRounds: 10
+  },
+  smtp: {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === &#39;true&#39;,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    },
+    from: process.env.SMTP_FROM
+  },
+  verificationUrl: process.env.VERIFICATION_URL,
+  passwordResetUrl: process.env.PASSWORD_RESET_URL
+});
+
+await auth.init();
+</code></pre>
+<hr>
+<h2 id="heading-6">📨 SMTP Provider Configuration</h2><h3 id="heading-7">Gmail</h3><ol>
+<li><strong>Enable 2-Factor Authentication</strong> in your Google Account</li>
+<li><strong>Generate App Password</strong>: <ul>
+<li>Go to Google Account → Security → 2-Step Verification → App passwords</li>
+<li>Create app password for &quot;Mail&quot;</li>
+<li>Use this as <code>SMTP_PASS</code></li>
+</ul>
+</li>
+</ol>
+<pre><code class="language-env">SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-gmail@gmail.com
+SMTP_PASS=your-16-char-app-password
+</code></pre>
+<h3 id="heading-8">SendGrid</h3><pre><code class="language-env">SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=apikey
+SMTP_PASS=your-sendgrid-api-key
+SMTP_FROM=verified-sender@yourdomain.com
+</code></pre>
+<h3 id="heading-9">Mailgun</h3><pre><code class="language-env">SMTP_HOST=smtp.mailgun.org
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=postmaster@yourdomain.mailgun.org
+SMTP_PASS=your-mailgun-smtp-password
+</code></pre>
+<h3 id="heading-10">AWS SES</h3><pre><code class="language-env">SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-ses-smtp-username
+SMTP_PASS=your-ses-smtp-password
+</code></pre>
+<h3 id="heading-11">Outlook/Office 365</h3><pre><code class="language-env">SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@outlook.com
+SMTP_PASS=your-password
+</code></pre>
+<h3 id="heading-12">Development (Mailtrap)</h3><p>Perfect for testing without sending real emails:</p>
+<pre><code class="language-env">SMTP_HOST=smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_SECURE=false
+SMTP_USER=your-mailtrap-username
+SMTP_PASS=your-mailtrap-password
+</code></pre>
+<hr>
+<h2 id="heading-13">💻 Usage Examples</h2><h3 id="heading-14">1. Email Verification Flow</h3><h4 id="heading-15">Backend: Send Verification on Registration</h4><p><strong>Automatic (Recommended)</strong></p>
+<pre><code class="language-javascript">const auth = new SecureNodeAuth({
+  // ... other config
+  security: {
+    requireEmailVerification: true // Auto-send on registration
+  },
+  verificationUrl: &#39;http://localhost:3000/verify-email&#39;
+});
+
+// When user registers, email is automatically sent
+app.post(&#39;/api/auth/register&#39;, async (req, res) =&gt; {
+  try {
+    const result = await auth.register(req.body);
+    res.json({
+      success: true,
+      message: &#39;Registration successful! Check your email for verification.&#39;,
+      data: result
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+</code></pre>
+<p><strong>Manual</strong></p>
+<pre><code class="language-javascript">app.post(&#39;/api/auth/send-verification&#39;, async (req, res) =&gt; {
+  try {
+    const { email } = req.body;
+    await auth.sendVerificationEmail(
+      email, 
+      &#39;http://localhost:3000/verify-email&#39;
+    );
+    res.json({ message: &#39;Verification email sent!&#39; });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+</code></pre>
+<h4 id="heading-16">Backend: Verify Email</h4><pre><code class="language-javascript">app.post(&#39;/api/auth/verify-email&#39;, async (req, res) =&gt; {
+  try {
+    const { token } = req.body;
+    const result = await auth.verifyEmail(token);
+    
+    res.json({
+      success: true,
+      message: &#39;Email verified successfully!&#39;,
+      userId: result.userId
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+</code></pre>
+<h4 id="heading-17">Frontend: Verification Page</h4><pre><code class="language-javascript">// React component for email verification
+import { useEffect, useState } from &#39;react&#39;;
+import { useSearchParams } from &#39;react-router-dom&#39;;
+import axios from &#39;axios&#39;;
+
+function VerifyEmail() {
+  const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState(&#39;verifying&#39;);
+  const [message, setMessage] = useState(&#39;&#39;);
+
+  useEffect(() =&gt; {
+    const token = searchParams.get(&#39;token&#39;);
+    
+    if (!token) {
+      setStatus(&#39;error&#39;);
+      setMessage(&#39;Invalid verification link&#39;);
+      return;
+    }
+
+    // Verify email
+    axios.post(&#39;/api/auth/verify-email&#39;, { token })
+      .then(response =&gt; {
+        setStatus(&#39;success&#39;);
+        setMessage(&#39;Email verified! Redirecting to login...&#39;);
+        setTimeout(() =&gt; {
+          window.location.href = &#39;/login&#39;;
+        }, 2000);
+      })
+      .catch(error =&gt; {
+        setStatus(&#39;error&#39;);
+        setMessage(error.response?.data?.error || &#39;Verification failed&#39;);
+      });
+  }, [searchParams]);
+
+  return (
+    &lt;div className=&quot;verify-email-page&quot;&gt;
+      {status === &#39;verifying&#39; &amp;&amp; &lt;p&gt;Verifying your email...&lt;/p&gt;}
+      {status === &#39;success&#39; &amp;&amp; &lt;p className=&quot;success&quot;&gt;{message}&lt;/p&gt;}
+      {status === &#39;error&#39; &amp;&amp; &lt;p className=&quot;error&quot;&gt;{message}&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<h4 id="heading-18">Resend Verification Email</h4><pre><code class="language-javascript">// Backend
+app.post(&#39;/api/auth/resend-verification&#39;, async (req, res) =&gt; {
+  try {
+    const { email } = req.body;
+    await auth.resendVerificationEmail(
+      email,
+      &#39;http://localhost:3000/verify-email&#39;
+    );
+    res.json({ message: &#39;Verification email resent!&#39; });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Frontend
+async function resendVerification(email) {
+  try {
+    await axios.post(&#39;/api/auth/resend-verification&#39;, { email });
+    alert(&#39;Verification email sent! Check your inbox.&#39;);
+  } catch (error) {
+    alert(error.response?.data?.error || &#39;Failed to resend&#39;);
+  }
+}
+</code></pre>
+<hr>
+<h3 id="heading-19">2. Password Reset Flow</h3><h4 id="heading-20">Backend: Forgot Password</h4><pre><code class="language-javascript">app.post(&#39;/api/auth/forgot-password&#39;, async (req, res) =&gt; {
+  try {
+    const { email } = req.body;
+    const result = await auth.sendPasswordResetEmail(
+      email,
+      &#39;http://localhost:3000/reset-password&#39;
+    );
+    
+    // Always return success (don&#39;t reveal if email exists)
+    res.json({
+      success: true,
+      message: &#39;If the email exists, a reset link has been sent.&#39;
+    });
+  } catch (error) {
+    // Still return success
+    res.json({
+      success: true,
+      message: &#39;If the email exists, a reset link has been sent.&#39;
+    });
+  }
+});
+</code></pre>
+<h4 id="heading-21">Backend: Reset Password</h4><pre><code class="language-javascript">app.post(&#39;/api/auth/reset-password&#39;, async (req, res) =&gt; {
+  try {
+    const { token, newPassword } = req.body;
+    const result = await auth.resetPassword(token, newPassword);
+    
+    res.json({
+      success: true,
+      message: &#39;Password reset successfully! Please login.&#39;
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+</code></pre>
+<h4 id="heading-22">Frontend: Forgot Password Form</h4><pre><code class="language-javascript">import { useState } from &#39;react&#39;;
+import axios from &#39;axios&#39;;
+
+function ForgotPassword() {
+  const [email, setEmail] = useState(&#39;&#39;);
+  const [submitted, setSubmitted] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    
+    try {
+      await axios.post(&#39;/api/auth/forgot-password&#39;, { email });
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitted(true); // Still show success
+    }
+  }
+
+  if (submitted) {
+    return (
+      &lt;div&gt;
+        &lt;p&gt;If your email exists, we&#39;ve sent a password reset link.&lt;/p&gt;
+        &lt;p&gt;Check your inbox (and spam folder).&lt;/p&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input
+        type=&quot;email&quot;
+        value={email}
+        onChange={e =&gt; setEmail(e.target.value)}
+        placeholder=&quot;Enter your email&quot;
+        required
+      /&gt;
+      &lt;button type=&quot;submit&quot;&gt;Send Reset Link&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+<h4 id="heading-23">Frontend: Reset Password Form</h4><pre><code class="language-javascript">import { useState } from &#39;react&#39;;
+import { useSearchParams } from &#39;react-router-dom&#39;;
+import axios from &#39;axios&#39;;
+
+function ResetPassword() {
+  const [searchParams] = useSearchParams();
+  const [newPassword, setNewPassword] = useState(&#39;&#39;);
+  const [confirmPassword, setConfirmPassword] = useState(&#39;&#39;);
+  const [message, setMessage] = useState(&#39;&#39;);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setMessage(&#39;Passwords do not match&#39;);
+      return;
+    }
+
+    const token = searchParams.get(&#39;token&#39;);
+    
+    try {
+      await axios.post(&#39;/api/auth/reset-password&#39;, {
+        token,
+        newPassword
+      });
+      
+      setMessage(&#39;Password reset successfully! Redirecting...&#39;);
+      setTimeout(() =&gt; {
+        window.location.href = &#39;/login&#39;;
+      }, 2000);
+    } catch (error) {
+      setMessage(error.response?.data?.error || &#39;Reset failed&#39;);
+    }
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input
+        type=&quot;password&quot;
+        value={newPassword}
+        onChange={e =&gt; setNewPassword(e.target.value)}
+        placeholder=&quot;New password&quot;
+        minLength={8}
+        required
+      /&gt;
+      &lt;input
+        type=&quot;password&quot;
+        value={confirmPassword}
+        onChange={e =&gt; setConfirmPassword(e.target.value)}
+        placeholder=&quot;Confirm password&quot;
+        minLength={8}
+        required
+      /&gt;
+      &lt;button type=&quot;submit&quot;&gt;Reset Password&lt;/button&gt;
+      {message &amp;&amp; &lt;p&gt;{message}&lt;/p&gt;}
+    &lt;/form&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2 id="heading-24">🎨 Custom Email Templates</h2><p>Replace the default templates with your own branding:</p>
+<pre><code class="language-javascript">const auth = new SecureNodeAuth({
+  // ... other config
+  emailTemplates: {
+    verification: {
+      subject: &#39;Welcome! Verify Your Email&#39;,
+      html: (verificationLink, email) =&gt; `
+        &lt;!DOCTYPE html&gt;
+        &lt;html&gt;
+        &lt;body style=&quot;font-family: Arial; padding: 20px;&quot;&gt;
+          &lt;h1&gt;Welcome to MyApp!&lt;/h1&gt;
+          &lt;p&gt;Click below to verify your email:&lt;/p&gt;
+          &lt;a href=&quot;${verificationLink}&quot; 
+             style=&quot;background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;&quot;&gt;
+            Verify Email
+          &lt;/a&gt;
+          &lt;p&gt;Or copy this link: ${verificationLink}&lt;/p&gt;
+        &lt;/body&gt;
+        &lt;/html&gt;
+      `
+    },
+    passwordReset: {
+      subject: &#39;Reset Your Password&#39;,
+      html: (resetLink, email) =&gt; `
+        &lt;!DOCTYPE html&gt;
+        &lt;html&gt;
+        &lt;body style=&quot;font-family: Arial; padding: 20px;&quot;&gt;
+          &lt;h1&gt;Reset Your Password&lt;/h1&gt;
+          &lt;p&gt;Click below to reset your password:&lt;/p&gt;
+          &lt;a href=&quot;${resetLink}&quot; 
+             style=&quot;background: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;&quot;&gt;
+            Reset Password
+          &lt;/a&gt;
+          &lt;p&gt;This link expires in 1 hour.&lt;/p&gt;
+          &lt;p&gt;If you didn&#39;t request this, ignore this email.&lt;/p&gt;
+        &lt;/body&gt;
+        &lt;/html&gt;
+      `
+    }
+  }
+});
+</code></pre>
+<hr>
+<h2 id="heading-25">🔒 Security Best Practices</h2><h3 id="heading-26">1. Token Expiration</h3><ul>
+<li>✅ Verification tokens: 24 hours</li>
+<li>✅ Reset tokens: 1 hour</li>
+<li>✅ Automatic cleanup of expired tokens</li>
+</ul>
+<h3 id="heading-27">2. Secure Token Generation</h3><pre><code class="language-javascript">// Uses crypto.randomBytes(32) - cryptographically secure
+// 64-character hex tokens (2^256 possibilities)
+</code></pre>
+<h3 id="heading-28">3. Don't Reveal User Existence</h3><pre><code class="language-javascript">// Always return success for forgot password
+// Prevents email enumeration attacks
+res.json({
+  message: &#39;If the email exists, a reset link has been sent.&#39;
+});
+</code></pre>
+<h3 id="heading-29">4. HTTPS in Production</h3><pre><code class="language-javascript">// Always use HTTPS URLs in production
+verificationUrl: &#39;https://yourapp.com/verify-email&#39;
+passwordResetUrl: &#39;https://yourapp.com/reset-password&#39;
+</code></pre>
+<h3 id="heading-30">5. Rate Limiting</h3><pre><code class="language-javascript">// Limit email sending to prevent abuse
+const rateLimit = require(&#39;express-rate-limit&#39;);
+
+const emailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // 3 emails per window
+  message: &#39;Too many requests, please try again later&#39;
+});
+
+app.post(&#39;/api/auth/forgot-password&#39;, emailLimiter, async (req, res) =&gt; {
+  // ...
+});
+</code></pre>
+<hr>
+<h2 id="heading-31">📊 Database Schema</h2><p>The email verification system uses two database structures:</p>
+<h3 id="heading-32">1. Users Table (Updated)</h3><pre><code class="language-sql">CREATE TABLE secure_auth_users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  emailVerified BOOLEAN DEFAULT FALSE,  -- New field
+  resetPasswordToken VARCHAR(255),       -- New field
+  resetPasswordExpires BIGINT,           -- New field
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+</code></pre>
+<h3 id="heading-33">2. Verification Tokens Table (New)</h3><pre><code class="language-sql">CREATE TABLE secure_auth_verification_tokens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  token VARCHAR(255) NOT NULL UNIQUE,
+  expiresAt BIGINT NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE,
+  INDEX idx_token (token),
+  INDEX idx_user_token (userId, token)
+);
+</code></pre>
+<hr>
+<h2 id="heading-34">🧪 Testing</h2><h3 id="heading-35">Test SMTP Connection</h3><pre><code class="language-javascript">async function testEmailConfig() {
+  try {
+    await auth.emailService.verifyConnection();
+    console.log(&#39;✓ SMTP connection successful!&#39;);
+  } catch (error) {
+    console.error(&#39;✗ SMTP connection failed:&#39;, error.message);
+  }
+}
+
+testEmailConfig();
+</code></pre>
+<h3 id="heading-36">Send Test Email</h3><pre><code class="language-javascript">await auth.sendVerificationEmail(
+  &#39;test@example.com&#39;,
+  &#39;http://localhost:3000/verify-email&#39;
+);
+console.log(&#39;Test email sent!&#39;);
+</code></pre>
+<h3 id="heading-37">Manual Token Verification</h3><pre><code class="language-javascript">// Get token from database
+const [tokens] = await auth.db.pool.execute(
+  &#39;SELECT token FROM secure_auth_verification_tokens WHERE userId = ? LIMIT 1&#39;,
+  [userId]
+);
+
+const token = tokens[0].token;
+
+// Verify
+await auth.verifyEmail(token);
+console.log(&#39;Email verified!&#39;);
+</code></pre>
+<hr>
+<h2 id="heading-38">🚀 Using with Express Routes</h2><p>SecureNodeAuth provides pre-built routes:</p>
+<pre><code class="language-javascript">const express = require(&#39;express&#39;);
+const SecureNodeAuth = require(&#39;secure-node-auth&#39;);
+
+const app = express();
+app.use(express.json());
+
+const auth = new SecureNodeAuth({
+  // ... config with SMTP
+  verificationUrl: &#39;http://localhost:3000/verify-email&#39;,
+  passwordResetUrl: &#39;http://localhost:3000/reset-password&#39;
+});
+
+await auth.init();
+
+// Mount pre-built auth routes (includes email routes)
+const AuthRoutes = require(&#39;secure-node-auth/src/middleware/AuthRoutes&#39;);
+const authRoutes = new AuthRoutes(auth, {
+  verificationUrl: &#39;http://localhost:3000/verify-email&#39;,
+  passwordResetUrl: &#39;http://localhost:3000/reset-password&#39;
+});
+app.use(&#39;/api/auth&#39;, authRoutes.getRouter());
+
+// Available email routes:
+// POST /api/auth/send-verification-email
+// POST /api/auth/verify-email
+// POST /api/auth/resend-verification-email
+// POST /api/auth/forgot-password
+// POST /api/auth/reset-password
+
+app.listen(3000, () =&gt; {
+  console.log(&#39;Server running on http://localhost:3000&#39;);
+});
+</code></pre>
+<hr>
+<h2 id="heading-39">📋 API Endpoints Reference</h2><h3 id="heading-40">Send Verification Email</h3><pre><code>POST /api/auth/send-verification-email
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;user@example.com&quot;
+}
+
+Response: { &quot;success&quot;: true, &quot;message&quot;: &quot;Verification email sent&quot; }
+</code></pre>
+<h3 id="heading-41">Verify Email</h3><pre><code>POST /api/auth/verify-email
+Content-Type: application/json
+
+{
+  &quot;token&quot;: &quot;64-char-token-from-email&quot;
+}
+
+Response: { &quot;success&quot;: true, &quot;message&quot;: &quot;Email verified successfully&quot; }
+</code></pre>
+<h3 id="heading-42">Resend Verification</h3><pre><code>POST /api/auth/resend-verification-email
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;user@example.com&quot;
+}
+
+Response: { &quot;success&quot;: true, &quot;message&quot;: &quot;Verification email resent&quot; }
+</code></pre>
+<h3 id="heading-43">Forgot Password</h3><pre><code>POST /api/auth/forgot-password
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;user@example.com&quot;
+}
+
+Response: { &quot;success&quot;: true, &quot;message&quot;: &quot;If the email exists, a reset link has been sent.&quot; }
+</code></pre>
+<h3 id="heading-44">Reset Password</h3><pre><code>POST /api/auth/reset-password
+Content-Type: application/json
+
+{
+  &quot;token&quot;: &quot;64-char-token-from-email&quot;,
+  &quot;newPassword&quot;: &quot;NewSecurePass123!&quot;
+}
+
+Response: { &quot;success&quot;: true, &quot;message&quot;: &quot;Password reset successfully&quot; }
+</code></pre>
+<hr>
+<h2 id="heading-45">🐛 Troubleshooting</h2><h3 id="heading-46">"Email service not configured"</h3><p><strong>Solution</strong>: Check your SMTP environment variables and ensure they&#39;re loaded:</p>
+<pre><code class="language-javascript">console.log(&#39;SMTP Host:&#39;, process.env.SMTP_HOST);
+console.log(&#39;SMTP User:&#39;, process.env.SMTP_USER);
+</code></pre>
+<h3 id="heading-47">Emails not being received</h3><ol>
+<li>Check spam/junk folder</li>
+<li>Verify SMTP credentials</li>
+<li>Test SMTP connection:</li>
+</ol>
+<pre><code class="language-javascript">await auth.emailService.verifyConnection();
+</code></pre>
+<ol start="4">
+<li>Check provider logs (Gmail, SendGrid, etc.)</li>
+</ol>
+<h3 id="heading-48">"Invalid or expired token"</h3><ul>
+<li>Tokens expire after 24 hours (verification) or 1 hour (reset)</li>
+<li>Request a new verification/reset email</li>
+<li>Check that token wasn&#39;t already used</li>
+</ul>
+<h3 id="heading-49">Gmail "Less secure apps" error</h3><ul>
+<li>Enable 2FA on your Google Account</li>
+<li>Generate an App Password (not your regular password)</li>
+<li>Use the 16-character app password</li>
+</ul>
+<hr>
+<h2 id="heading-50">🌟 Complete Example</h2><p>See <code>examples/email-verification-example.js</code> for a full working example with:</p>
+<ul>
+<li>Email verification on registration</li>
+<li>Resend verification functionality</li>
+<li>Forgot password flow</li>
+<li>Reset password with token</li>
+<li>Custom email templates</li>
+<li>Frontend integration examples</li>
+</ul>
+<hr>
+<h2 id="heading-51">📚 Related Documentation</h2><ul>
+<li><a href="../README.md">Main README</a></li>
+<li><a href="SECURITY.md">Security Guide</a></li>
+<li><a href="HEADLESS_APPS_INDEX.md">Headless Apps Guide</a></li>
+</ul>
+<hr>
+<p><strong>Built with ❤️ to make authentication simple and secure!</strong></p>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="SECURITY.html" class="nav-button-outline">
+        <i class="fas fa-arrow-left"></i>
+        <span>Security Guide</span>
+      </a>
+      <a href="FASTIFY_GUIDE.html" class="nav-button">
+        <span>Fastify Guide</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>

@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="SecureNodeAuth - Blazing fast, zero-config MySQL authentication system with JWT. Set up secure auth in seconds."
+    />
+    <title>SecureNodeAuth - Zero-Config MySQL Authentication with JWT</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+              accent: '#f093fb',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <style>
+      .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .code-block {
+        background: #1a1a2e;
+        border: 1px solid #2d3748;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white antialiased">
+    <!-- Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-90"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-shield-alt text-primary text-2xl"></i>
+            <span class="text-xl font-bold gradient-text">SecureNodeAuth</span>
+          </div>
+
+          <!-- Desktop Menu -->
+          <div class="hidden md:flex items-center space-x-8">
+            <a href="#features" class="text-gray-300 hover:text-primary transition">Features</a>
+            <a href="#quickstart" class="text-gray-300 hover:text-primary transition"
+              >Quick Start</a
+            >
+            <a href="#docs" class="text-gray-300 hover:text-primary transition">Docs</a>
+            <a href="#examples" class="text-gray-300 hover:text-primary transition">Examples</a>
+            <a
+              href="https://github.com/yourusername/secure-node-auth"
+              target="_blank"
+              class="text-gray-300 hover:text-primary transition"
+            >
+              <i class="fab fa-github"></i> GitHub
+            </a>
+          </div>
+
+          <!-- Mobile Menu Button -->
+          <button id="mobile-menu-btn" class="md:hidden text-2xl">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden pb-4">
+          <a href="#features" class="block py-2 text-gray-300 hover:text-primary transition"
+            >Features</a
+          >
+          <a href="#quickstart" class="block py-2 text-gray-300 hover:text-primary transition"
+            >Quick Start</a
+          >
+          <a href="#docs" class="block py-2 text-gray-300 hover:text-primary transition">Docs</a>
+          <a href="#examples" class="block py-2 text-gray-300 hover:text-primary transition"
+            >Examples</a
+          >
+          <a
+            href="https://github.com/yourusername/secure-node-auth"
+            target="_blank"
+            class="block py-2 text-gray-300 hover:text-primary transition"
+          >
+            <i class="fab fa-github"></i> GitHub
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <!-- Hero Content -->
+          <div class="space-y-6">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight gradient-text">
+              Zero-Config MySQL Authentication
+            </h1>
+            <p class="text-xl text-gray-400">
+              Blazing fast, production-ready authentication system with JWT, email verification, and
+              password reset. Set up in seconds, not hours.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <a
+                href="#quickstart"
+                class="gradient-bg text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition text-center"
+              >
+                <i class="fas fa-rocket mr-2"></i>Get Started
+              </a>
+              <a
+                href="#docs"
+                class="border-2 border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition text-center"
+              >
+                <i class="fas fa-book mr-2"></i>Documentation
+              </a>
+            </div>
+            <div class="flex flex-wrap gap-4 text-sm">
+              <div class="flex items-center space-x-2 text-green-400">
+                <i class="fas fa-check-circle"></i>
+                <span>68/68 Tests Passed</span>
+              </div>
+              <div class="flex items-center space-x-2 text-yellow-400">
+                <i class="fas fa-star"></i>
+                <span>5/5 Security Rating</span>
+              </div>
+              <div class="flex items-center space-x-2 text-blue-400">
+                <i class="fas fa-bolt"></i>
+                <span>Zero Configuration</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Code Example -->
+          <div class="code-block rounded-lg overflow-hidden shadow-2xl">
+            <div class="bg-gray-800 px-4 py-2 flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-red-500"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              <span class="text-sm text-gray-400 ml-4">app.js</span>
+            </div>
+            <div class="p-6 overflow-x-auto relative">
+              <button
+                class="copy-btn absolute top-2 right-2 bg-primary text-white px-3 py-1 rounded text-sm hover:bg-secondary transition"
+              >
+                <i class="fas fa-copy"></i>
+              </button>
+              <pre
+                class="text-sm"
+              ><code class="language-javascript">const SecureAuth = require('secure-node-auth');
+
+const auth = new SecureAuth({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'myapp'
+});
+
+// That's it! Auth system ready 🚀
+app.use('/auth', auth.routes());</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-4 bg-gray-900">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl md:text-5xl font-bold gradient-text mb-4">Powerful Features</h2>
+          <p class="text-xl text-gray-400">
+            Everything you need for production-ready authentication
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <!-- Feature Card -->
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-bolt text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Zero Configuration</h3>
+            <p class="text-gray-400">
+              Auto-creates tables, handles schema updates, and configures security automatically.
+            </p>
+          </div>
+
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-envelope text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Email Verification</h3>
+            <p class="text-gray-400">
+              Built-in SMTP support with beautiful email templates for verification and password
+              reset.
+            </p>
+          </div>
+
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-lock text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">JWT Security</h3>
+            <p class="text-gray-400">
+              Access & refresh tokens with automatic rotation and blacklisting on logout.
+            </p>
+          </div>
+
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-tachometer-alt text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Express & Fastify</h3>
+            <p class="text-gray-400">
+              Full support for both frameworks with optimized middleware and validation.
+            </p>
+          </div>
+
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-sliders-h text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Custom Fields</h3>
+            <p class="text-gray-400">
+              Extend user model with custom fields without touching the database.
+            </p>
+          </div>
+
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-shield-alt text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Production Ready</h3>
+            <p class="text-gray-400">
+              Bcrypt hashing, rate limiting, SQL injection protection, and comprehensive tests.
+            </p>
+          </div>
+
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-mobile-alt text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Headless Mode</h3>
+            <p class="text-gray-400">
+              Perfect for mobile apps and SPAs with JSON-only responses and token management.
+            </p>
+          </div>
+
+          <div
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-code text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">TypeScript Ready</h3>
+            <p class="text-gray-400">
+              Full TypeScript definitions included for better development experience.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="quickstart" class="py-20 px-4 bg-gray-800">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl md:text-5xl font-bold gradient-text mb-4">
+            Get Started in 60 Seconds
+          </h2>
+          <p class="text-xl text-gray-400">Four simple steps to secure authentication</p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-8 mb-12">
+          <div class="text-center">
+            <div
+              class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4"
+            >
+              1
+            </div>
+            <h3 class="text-lg font-bold mb-2">Install Package</h3>
+            <div class="code-block rounded px-4 py-2 text-sm">npm install secure-node-auth</div>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4"
+            >
+              2
+            </div>
+            <h3 class="text-lg font-bold mb-2">Initialize</h3>
+            <div class="code-block rounded px-4 py-2 text-sm">new SecureAuth(config)</div>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4"
+            >
+              3
+            </div>
+            <h3 class="text-lg font-bold mb-2">Add Routes</h3>
+            <div class="code-block rounded px-4 py-2 text-sm">app.use(auth.routes())</div>
+          </div>
+
+          <div class="text-center">
+            <div
+              class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4"
+            >
+              4
+            </div>
+            <h3 class="text-lg font-bold mb-2">Done! 🎉</h3>
+            <div class="code-block rounded px-4 py-2 text-sm">13 routes ready</div>
+          </div>
+        </div>
+
+        <!-- Framework Tabs -->
+        <div class="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+          <div class="flex border-b border-gray-700 overflow-x-auto">
+            <button
+              class="framework-tab px-6 py-3 font-semibold border-b-2 border-primary text-primary whitespace-nowrap"
+              data-framework="express"
+            >
+              Express.js
+            </button>
+            <button
+              class="framework-tab px-6 py-3 font-semibold text-gray-400 hover:text-white transition whitespace-nowrap"
+              data-framework="fastify"
+            >
+              Fastify
+            </button>
+            <button
+              class="framework-tab px-6 py-3 font-semibold text-gray-400 hover:text-white transition whitespace-nowrap"
+              data-framework="standalone"
+            >
+              Standalone
+            </button>
+          </div>
+
+          <div id="express-code" class="framework-content p-6">
+            <div class="relative">
+              <button
+                class="copy-code absolute top-2 right-2 bg-primary text-white px-3 py-1 rounded text-sm hover:bg-secondary transition z-10"
+              >
+                <i class="fas fa-copy"></i> Copy
+              </button>
+              <pre
+                class="overflow-x-auto"
+              ><code class="language-javascript">const express = require('express');
+const SecureAuth = require('secure-node-auth');
+
+const app = express();
+app.use(express.json());
+
+// Initialize SecureAuth
+const auth = new SecureAuth({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'myapp',
+  jwtSecret: 'your-secret-key'
+});
+
+// Add authentication routes
+app.use('/auth', auth.routes());
+
+// Protected route example
+app.get('/profile', auth.authenticate, (req, res) => {
+  res.json({ user: req.user });
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});</code></pre>
+            </div>
+          </div>
+
+          <div id="fastify-code" class="framework-content p-6 hidden">
+            <div class="relative">
+              <button
+                class="copy-code absolute top-2 right-2 bg-primary text-white px-3 py-1 rounded text-sm hover:bg-secondary transition z-10"
+              >
+                <i class="fas fa-copy"></i> Copy
+              </button>
+              <pre
+                class="overflow-x-auto"
+              ><code class="language-javascript">const fastify = require('fastify')({ logger: true });
+const SecureAuth = require('secure-node-auth');
+
+// Initialize SecureAuth
+const auth = new SecureAuth({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'myapp',
+  jwtSecret: 'your-secret-key'
+});
+
+// Register Fastify plugin
+fastify.register(auth.fastifyPlugin);
+
+// Protected route example
+fastify.get('/profile', {
+  preHandler: fastify.authenticate
+}, async (request, reply) => {
+  return { user: request.user };
+});
+
+fastify.listen({ port: 3000 }, (err) => {
+  if (err) throw err;
+});</code></pre>
+            </div>
+          </div>
+
+          <div id="standalone-code" class="framework-content p-6 hidden">
+            <div class="relative">
+              <button
+                class="copy-code absolute top-2 right-2 bg-primary text-white px-3 py-1 rounded text-sm hover:bg-secondary transition z-10"
+              >
+                <i class="fas fa-copy"></i> Copy
+              </button>
+              <pre
+                class="overflow-x-auto"
+              ><code class="language-javascript">const SecureAuth = require('secure-node-auth');
+
+// Initialize SecureAuth
+const auth = new SecureAuth({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'myapp',
+  jwtSecret: 'your-secret-key'
+});
+
+// Use auth methods directly
+async function registerUser() {
+  const result = await auth.register({
+    email: 'user@example.com',
+    password: 'securePassword123'
+  });
+  
+  console.log('User registered:', result.user);
+}
+
+// Verify token
+const decoded = await auth.verifyToken(token);
+console.log('User:', decoded);</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="docs" class="py-20 px-4 bg-gray-900">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl md:text-5xl font-bold gradient-text mb-4">Documentation</h2>
+          <p class="text-xl text-gray-400">Comprehensive guides for every feature</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <a
+            href="docs/SECURITY_GUIDE.html"
+            target="_blank"
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition block"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-shield-alt text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Security Guide</h3>
+            <p class="text-gray-400 mb-4">
+              Learn about security features, best practices, and JWT implementation.
+            </p>
+            <span class="text-primary font-semibold">Read Guide →</span>
+          </a>
+
+          <a
+            href="docs/EMAIL_VERIFICATION_GUIDE.html"
+            target="_blank"
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition block"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-envelope text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Email Verification</h3>
+            <p class="text-gray-400 mb-4">
+              Setup SMTP, customize templates, and configure email workflows.
+            </p>
+            <span class="text-primary font-semibold">Read Guide →</span>
+          </a>
+
+          <a
+            href="docs/FASTIFY_GUIDE.html"
+            target="_blank"
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition block"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-rocket text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Fastify Integration</h3>
+            <p class="text-gray-400 mb-4">Use SecureAuth with Fastify for maximum performance.</p>
+            <span class="text-primary font-semibold">Read Guide →</span>
+          </a>
+
+          <a
+            href="docs/HEADLESS_APPS_GUIDE.html"
+            target="_blank"
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition block"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-mobile-alt text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Headless Apps</h3>
+            <p class="text-gray-400 mb-4">
+              Build mobile apps and SPAs with JSON-only authentication.
+            </p>
+            <span class="text-primary font-semibold">Read Guide →</span>
+          </a>
+
+          <a
+            href="docs/TYPESCRIPT_GUIDE.html"
+            target="_blank"
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition block"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fab fa-js text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">TypeScript Guide</h3>
+            <p class="text-gray-400 mb-4">
+              Full TypeScript support with types, interfaces, and IntelliSense.
+            </p>
+            <span class="text-primary font-semibold">Read Guide →</span>
+          </a>
+
+          <a
+            href="docs/README.html"
+            target="_blank"
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition block"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-book text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">API Reference</h3>
+            <p class="text-gray-400 mb-4">
+              Complete API documentation with all methods and options.
+            </p>
+            <span class="text-primary font-semibold">Read Guide →</span>
+          </a>
+
+          <a
+            href="#examples"
+            class="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-primary transition block"
+          >
+            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-code text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Code Examples</h3>
+            <p class="text-gray-400 mb-4">Real-world examples and implementation patterns.</p>
+            <span class="text-primary font-semibold">View Examples →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Examples Section -->
+    <section id="examples" class="py-20 px-4 bg-gray-800">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl md:text-5xl font-bold gradient-text mb-4">Real-World Examples</h2>
+          <p class="text-xl text-gray-400">See how to implement common authentication patterns</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="bg-gray-900 p-6 rounded-lg border border-gray-700">
+            <h3 class="text-2xl font-bold mb-4 flex items-center">
+              <i class="fas fa-blog text-primary mr-3"></i>
+              Blog Platform
+            </h3>
+            <p class="text-gray-400 mb-4">
+              Complete blog with user registration, email verification, and protected admin routes.
+            </p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                User registration & login
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Email verification
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Role-based access control
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Password reset flow
+              </li>
+            </ul>
+            <button
+              class="w-full border-2 border-primary text-primary px-4 py-2 rounded hover:bg-primary hover:text-white transition"
+            >
+              View Example
+            </button>
+          </div>
+
+          <div class="bg-gray-900 p-6 rounded-lg border border-gray-700">
+            <h3 class="text-2xl font-bold mb-4 flex items-center">
+              <i class="fas fa-shopping-cart text-primary mr-3"></i>
+              E-Commerce
+            </h3>
+            <p class="text-gray-400 mb-4">
+              Online store with custom user fields, order history, and profile management.
+            </p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Custom user fields
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Social login integration
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Session management
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Multi-device logout
+              </li>
+            </ul>
+            <button
+              class="w-full border-2 border-primary text-primary px-4 py-2 rounded hover:bg-primary hover:text-white transition"
+            >
+              View Example
+            </button>
+          </div>
+
+          <div class="bg-gray-900 p-6 rounded-lg border border-gray-700">
+            <h3 class="text-2xl font-bold mb-4 flex items-center">
+              <i class="fas fa-mobile-alt text-primary mr-3"></i>
+              Mobile API
+            </h3>
+            <p class="text-gray-400 mb-4">
+              RESTful API for mobile apps with token refresh and device management.
+            </p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Headless authentication
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Token refresh workflow
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                Rate limiting
+              </li>
+              <li class="flex items-center text-sm text-gray-400">
+                <i class="fas fa-check text-green-400 mr-2"></i>
+                API documentation
+              </li>
+            </ul>
+            <button
+              class="w-full border-2 border-primary text-primary px-4 py-2 rounded hover:bg-primary hover:text-white transition"
+            >
+              View Example
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-20 px-4 gradient-bg">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div>
+            <div class="text-4xl md:text-5xl font-bold mb-2">68</div>
+            <div class="text-base md:text-lg opacity-90">Tests Passed</div>
+          </div>
+          <div>
+            <div class="text-4xl md:text-5xl font-bold mb-2">13</div>
+            <div class="text-base md:text-lg opacity-90">API Routes</div>
+          </div>
+          <div>
+            <div class="text-4xl md:text-5xl font-bold mb-2">5★</div>
+            <div class="text-base md:text-lg opacity-90">Security Rating</div>
+          </div>
+          <div>
+            <div class="text-4xl md:text-5xl font-bold mb-2">0</div>
+            <div class="text-base md:text-lg opacity-90">Config Required</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 px-4 bg-gray-900 text-center">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold gradient-text mb-6">
+          Ready to Secure Your App?
+        </h2>
+        <p class="text-lg md:text-xl text-gray-400 mb-8">
+          Join developers who trust SecureNodeAuth for production authentication
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="#quickstart"
+            class="gradient-bg text-white px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition text-lg"
+          >
+            <i class="fas fa-rocket mr-2"></i>Get Started Now
+          </a>
+          <a
+            href="https://github.com/yourusername/secure-node-auth"
+            target="_blank"
+            class="border-2 border-primary text-primary px-8 py-4 rounded-lg font-semibold hover:bg-primary hover:text-white transition text-lg"
+          >
+            <i class="fab fa-github mr-2"></i>View on GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 border-t border-gray-700 py-12 px-4">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <div class="flex items-center space-x-2 mb-4">
+              <i class="fas fa-shield-alt text-primary text-xl"></i>
+              <span class="text-lg font-bold">SecureNodeAuth</span>
+            </div>
+            <p class="text-gray-400 text-sm">
+              Production-ready MySQL authentication with zero configuration.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-bold mb-4">Documentation</h4>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a href="#quickstart" class="text-gray-400 hover:text-primary transition"
+                  >Getting Started</a
+                >
+              </li>
+              <li>
+                <a
+                  href="docs/SECURITY_GUIDE.html"
+                  target="_blank"
+                  class="text-gray-400 hover:text-primary transition"
+                  >Security Guide</a
+                >
+              </li>
+              <li>
+                <a
+                  href="docs/EMAIL_VERIFICATION_GUIDE.html"
+                  target="_blank"
+                  class="text-gray-400 hover:text-primary transition"
+                  >Email Setup</a
+                >
+              </li>
+              <li>
+                <a
+                  href="docs/README.html"
+                  target="_blank"
+                  class="text-gray-400 hover:text-primary transition"
+                  >API Reference</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-bold mb-4">Resources</h4>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a href="#examples" class="text-gray-400 hover:text-primary transition">Examples</a>
+              </li>
+              <li>
+                <a
+                  href="docs/FASTIFY_GUIDE.html"
+                  target="_blank"
+                  class="text-gray-400 hover:text-primary transition"
+                  >Fastify Guide</a
+                >
+              </li>
+              <li>
+                <a
+                  href="docs/HEADLESS_APPS_GUIDE.html"
+                  target="_blank"
+                  class="text-gray-400 hover:text-primary transition"
+                  >Mobile Apps</a
+                >
+              </li>
+              <li><a href="#" class="text-gray-400 hover:text-primary transition">Changelog</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-bold mb-4">Community</h4>
+            <ul class="space-y-2 text-sm">
+              <li>
+                <a
+                  href="https://github.com/yourusername/secure-node-auth"
+                  class="text-gray-400 hover:text-primary transition"
+                  >GitHub</a
+                >
+              </li>
+              <li><a href="#" class="text-gray-400 hover:text-primary transition">Discord</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-primary transition">Twitter</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-primary transition">Support</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-700 pt-8 text-center text-gray-400 text-sm">
+          <p>&copy; 2025 SecureNodeAuth. Licensed under MIT.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+  </body>
+</html>

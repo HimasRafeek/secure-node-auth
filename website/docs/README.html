@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secure Node Auth - Fast MySQL Authentication with JWT</title>
+    <meta name="description" content="Zero-config MySQL authentication system with JWT tokens, bcrypt hashing, and production-ready security. Set up secure auth in seconds." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Secure Node Auth - Fast MySQL Authentication with JWT" />
+    <meta property="og:description" content="Zero-config MySQL authentication system with JWT tokens, bcrypt hashing, and production-ready security. Set up secure auth in seconds." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Secure Node Auth - Fast MySQL Authentication with JWT" />
+    <meta name="twitter:description" content="Zero-config MySQL authentication system with JWT tokens, bcrypt hashing, and production-ready security. Set up secure auth in seconds." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      🔐 Secure Node Auth
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      ✨ Features
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-2">
+      📦 Installation
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-3">
+      🚀 Quick Start
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-4">
+      Basic Setup (3 lines!)
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-5">
+      📖 Usage Examples
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-6">
+      Complete Express Server
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-7">
+      Adding Custom Fields
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-8">
+      Using Hooks
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-9">
+      Manual Authentication Flow
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-10">
+      🔧 Configuration Options
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-11">
+      📡 API Endpoints
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-12">
+      Request/Response Examples
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-13">
+      🛡️ Security Features
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-14">
+      Password Security
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-15">
+      Account Protection
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-16">
+      Token Security
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-17">
+      Database Security
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-18">
+      🏗️ Database Schema
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-19">
+      🎣 Hooks System
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-20">
+      🔌 Middleware Usage
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-21">
+      🧪 Testing
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-22">
+      📚 Advanced Topics
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-23">
+      Environment Variables
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-24">
+      Token Cleanup
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-25">
+      Direct Database Access
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-26">
+      📚 Additional Guides
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-27">
+      🔐 Security Features
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-28">
+      🤝 Contributing
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-29">
+      📄 License
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-30">
+      🔗 Links
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-31">
+      💡 Support
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">🔐 Secure Node Auth</h1><blockquote>
+<p>Blazing fast, zero-config MySQL authentication system with JWT. Set up secure auth in seconds!</p>
+</blockquote>
+<p><a href="https://www.npmjs.com/package/secure-node-auth"><img src="https://img.shields.io/npm/v/secure-node-auth.svg" alt="npm version"></a><br><a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a><br><a href="https://nodejs.org"><img src="https://img.shields.io/node/v/secure-node-auth.svg" alt="Node.js Version"></a></p>
+<h2 id="heading-1">✨ Features</h2><ul>
+<li>⚡ <strong>Zero Configuration</strong> - Works out of the box with sensible defaults</li>
+<li>🔒 <strong>Production-Ready Security</strong> - Bcrypt hashing, JWT tokens, rate limiting, account lockout</li>
+<li>🚀 <strong>Lightning Fast</strong> - Built on mysql2 with connection pooling and optimized queries</li>
+<li>🎨 <strong>Highly Customizable</strong> - Add custom fields, hooks, and configurations</li>
+<li>🔄 <strong>Auto Schema Setup</strong> - Automatically creates tables, indexes, and relationships</li>
+<li>🎯 <strong>Express Ready</strong> - Pre-built routes and middleware</li>
+<li>📦 <strong>Refresh Tokens</strong> - Secure token rotation with blacklisting</li>
+<li>🛡️ <strong>Attack Protection</strong> - Rate limiting, SQL injection protection, brute force prevention</li>
+<li>🔌 <strong>Extensible</strong> - Plugin system with before/after hooks</li>
+<li>📝 <strong>TypeScript Support</strong> - Full type definitions included</li>
+</ul>
+<h2 id="heading-2">📦 Installation</h2><pre><code class="language-bash">npm install secure-node-auth
+</code></pre>
+<p><strong>Dependencies:</strong></p>
+<ul>
+<li><code>mysql2</code> - MySQL client</li>
+<li><code>jsonwebtoken</code> - JWT token generation</li>
+<li><code>bcrypt</code> - Password hashing</li>
+<li><code>validator</code> - Input validation</li>
+<li><code>express</code> - Web framework (peer dependency)</li>
+</ul>
+<h2 id="heading-3">🚀 Quick Start</h2><h3 id="heading-4">Basic Setup (3 lines!)</h3><pre><code class="language-javascript">const SecureNodeAuth = require(&#39;secure-node-auth&#39;);
+
+const auth = new SecureNodeAuth({
+  connection: {
+    host: &#39;localhost&#39;,
+    user: &#39;root&#39;,
+    password: &#39;your_password&#39;,
+    database: &#39;myapp&#39;,
+  },
+});
+
+await auth.init(); // Auto-creates tables!
+
+// Use with Express
+app.use(&#39;/auth&#39;, auth.router());
+</code></pre>
+<p>That&#39;s it! You now have a complete authentication system with:</p>
+<ul>
+<li>✅ User registration</li>
+<li>✅ Login with JWT</li>
+<li>✅ Token refresh</li>
+<li>✅ Password change</li>
+<li>✅ Profile management</li>
+<li>✅ Logout (single/all devices)</li>
+</ul>
+<h2 id="heading-5">📖 Usage Examples</h2><h3 id="heading-6">Complete Express Server</h3><pre><code class="language-javascript">require(&#39;dotenv&#39;).config();
+const express = require(&#39;express&#39;);
+const SecureNodeAuth = require(&#39;secure-node-auth&#39;);
+
+const app = express();
+app.use(express.json());
+
+// Initialize auth system
+const auth = new SecureNodeAuth({
+  connection: {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  },
+});
+
+await auth.init();
+
+// Mount auth routes
+app.use(&#39;/auth&#39;, auth.router());
+
+// Protected route example
+app.get(&#39;/api/profile&#39;, auth.middleware(), async (req, res) =&gt; {
+  const user = await auth.getUserById(req.user.userId);
+  res.json({ user });
+});
+
+app.listen(3000, () =&gt; console.log(&#39;Server running on port 3000&#39;));
+</code></pre>
+<h3 id="heading-7">Adding Custom Fields</h3><pre><code class="language-javascript">const auth = new SecureNodeAuth({
+  /* config */
+});
+
+// Add custom fields BEFORE init()
+auth.addField({
+  name: &#39;phoneNumber&#39;,
+  type: &#39;VARCHAR(20)&#39;,
+  required: false,
+  unique: true,
+});
+
+auth.addField({
+  name: &#39;companyName&#39;,
+  type: &#39;VARCHAR(255)&#39;,
+  required: false,
+});
+
+auth.addField({
+  name: &#39;subscriptionTier&#39;,
+  type: &quot;ENUM(&#39;free&#39;, &#39;premium&#39;, &#39;enterprise&#39;)&quot;,
+  defaultValue: &#39;free&#39;,
+});
+
+await auth.init();
+
+// Now register with custom fields
+await auth.register({
+  email: &#39;user@example.com&#39;,
+  password: &#39;SecurePass123!&#39;,
+  phoneNumber: &#39;+1234567890&#39;,
+  companyName: &#39;Tech Corp&#39;,
+  subscriptionTier: &#39;premium&#39;,
+});
+</code></pre>
+<h3 id="heading-8">Using Hooks</h3><pre><code class="language-javascript">// Before/after registration
+auth.on(&#39;beforeRegister&#39;, async (userData) =&gt; {
+  console.log(&#39;New user signing up:&#39;, userData.email);
+  // Add custom validation, check blacklist, etc.
+});
+
+auth.on(&#39;afterRegister&#39;, async (result) =&gt; {
+  console.log(&#39;User registered:&#39;, result.user.email);
+  // Send welcome email, create user profile, etc.
+  await sendWelcomeEmail(result.user.email);
+});
+
+// Before/after login
+auth.on(&#39;beforeLogin&#39;, async ({ email }) =&gt; {
+  console.log(&#39;Login attempt:&#39;, email);
+});
+
+auth.on(&#39;afterLogin&#39;, async (result) =&gt; {
+  console.log(&#39;Successful login:&#39;, result.user.email);
+  // Track analytics, update last login, etc.
+});
+</code></pre>
+<h3 id="heading-9">Manual Authentication Flow</h3><pre><code class="language-javascript">// Register
+const { user, tokens } = await auth.register({
+  email: &#39;john@example.com&#39;,
+  password: &#39;SecurePass123!&#39;,
+  firstName: &#39;John&#39;,
+  lastName: &#39;Doe&#39;,
+});
+
+// Login
+const login = await auth.login(&#39;john@example.com&#39;, &#39;SecurePass123!&#39;);
+console.log(login.tokens.accessToken);
+console.log(login.tokens.refreshToken);
+
+// Verify token
+const decoded = await auth.verifyAccessToken(login.tokens.accessToken);
+console.log(decoded.userId, decoded.email);
+
+// Refresh access token
+const { accessToken } = await auth.refreshToken(login.tokens.refreshToken);
+
+// Change password
+await auth.changePassword(userId, &#39;OldPass123!&#39;, &#39;NewPass456!&#39;);
+
+// Logout
+await auth.logout(refreshToken);
+
+// Logout all devices
+await auth.logoutAll(userId);
+</code></pre>
+<h2 id="heading-10">🔧 Configuration Options</h2><pre><code class="language-javascript">const auth = new SecureNodeAuth({
+  // Database connection
+  connection: {
+    host: &#39;localhost&#39;,
+    user: &#39;root&#39;,
+    password: &#39;&#39;,
+    database: &#39;myapp&#39;,
+    port: 3306,
+    connectionLimit: 10,
+  },
+
+  // JWT configuration
+  jwt: {
+    accessSecret: &#39;your-access-secret&#39;,
+    refreshSecret: &#39;your-refresh-secret&#39;,
+    accessExpiresIn: &#39;15m&#39;, // 15 minutes
+    refreshExpiresIn: &#39;7d&#39;, // 7 days
+  },
+
+  // Security settings
+  security: {
+    bcryptRounds: 10, // Higher = more secure, slower
+    maxLoginAttempts: 5, // Account lockout threshold
+    lockoutTime: 900000, // 15 minutes in milliseconds
+    passwordMinLength: 8,
+    passwordRequireUppercase: true,
+    passwordRequireNumbers: true,
+    passwordRequireSpecialChars: true,
+  },
+
+  // Custom table names
+  tables: {
+    users: &#39;my_users&#39;,
+    refreshTokens: &#39;my_tokens&#39;,
+    loginAttempts: &#39;my_login_attempts&#39;,
+  },
+});
+</code></pre>
+<h2 id="heading-11">📡 API Endpoints</h2><p>When you mount <code>auth.router()</code>, these endpoints are automatically available:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+<th>Auth Required</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td><code>/register</code></td>
+<td>Register new user</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/login</code></td>
+<td>Login user</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/refresh</code></td>
+<td>Refresh access token</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/logout</code></td>
+<td>Logout (revoke token)</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/logout-all</code></td>
+<td>Logout all devices</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/me</code></td>
+<td>Get current user</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/me</code></td>
+<td>Update user profile</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/change-password</code></td>
+<td>Change password</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/verify</code></td>
+<td>Verify token</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/health</code></td>
+<td>Health check</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+<h3 id="heading-12">Request/Response Examples</h3><p><strong>Register:</strong></p>
+<pre><code class="language-javascript">POST /auth/register
+{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;password&quot;: &quot;SecurePass123!&quot;,
+  &quot;firstName&quot;: &quot;John&quot;,
+  &quot;lastName&quot;: &quot;Doe&quot;
+}
+
+// Response
+{
+  &quot;success&quot;: true,
+  &quot;message&quot;: &quot;User registered successfully&quot;,
+  &quot;data&quot;: {
+    &quot;user&quot;: { ... },
+    &quot;tokens&quot;: {
+      &quot;accessToken&quot;: &quot;eyJhbG...&quot;,
+      &quot;refreshToken&quot;: &quot;eyJhbG...&quot;,
+      &quot;expiresIn&quot;: &quot;15m&quot;
+    }
+  }
+}
+</code></pre>
+<p><strong>Login:</strong></p>
+<pre><code class="language-javascript">POST /auth/login
+{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;password&quot;: &quot;SecurePass123!&quot;
+}
+
+// Response
+{
+  &quot;success&quot;: true,
+  &quot;message&quot;: &quot;Login successful&quot;,
+  &quot;data&quot;: {
+    &quot;user&quot;: { ... },
+    &quot;tokens&quot;: { ... }
+  }
+}
+</code></pre>
+<h2 id="heading-13">🛡️ Security Features</h2><h3 id="heading-14">Password Security</h3><ul>
+<li>✅ Bcrypt hashing (configurable rounds)</li>
+<li>✅ Minimum length requirements</li>
+<li>✅ Complexity requirements (uppercase, numbers, special chars)</li>
+<li>✅ Common password blacklist</li>
+</ul>
+<h3 id="heading-15">Account Protection</h3><ul>
+<li>✅ Brute force protection (rate limiting)</li>
+<li>✅ Account lockout after failed attempts</li>
+<li>✅ Automatic lockout expiration</li>
+<li>✅ Login attempt tracking</li>
+</ul>
+<h3 id="heading-16">Token Security</h3><ul>
+<li>✅ Separate access and refresh tokens</li>
+<li>✅ Short-lived access tokens (15m default)</li>
+<li>✅ Token revocation support</li>
+<li>✅ Logout from all devices</li>
+<li>✅ Automatic token cleanup</li>
+</ul>
+<h3 id="heading-17">Database Security</h3><ul>
+<li>✅ Parameterized queries (SQL injection protection)</li>
+<li>✅ Connection pooling</li>
+<li>✅ Indexed queries for performance</li>
+<li>✅ Foreign key constraints</li>
+</ul>
+<h2 id="heading-18">🏗️ Database Schema</h2><p>The package automatically creates these tables:</p>
+<p><strong>secure_auth_users</strong></p>
+<pre><code class="language-sql">- id (PRIMARY KEY)
+- email (UNIQUE, INDEXED)
+- password (HASHED)
+- firstName
+- lastName
+- emailVerified
+- isActive
+- createdAt
+- updatedAt
++ your custom fields
+</code></pre>
+<p><strong>secure_auth_refresh_tokens</strong></p>
+<pre><code class="language-sql">- id (PRIMARY KEY)
+- userId (FOREIGN KEY)
+- token
+- revoked
+- expiresAt (INDEXED)
+- createdAt
+</code></pre>
+<p><strong>secure_auth_login_attempts</strong></p>
+<pre><code class="language-sql">- id (PRIMARY KEY)
+- email (INDEXED)
+- success
+- ipAddress
+- userAgent
+- attemptedAt
+</code></pre>
+<h2 id="heading-19">🎣 Hooks System</h2><p>Available hooks:</p>
+<ul>
+<li><code>beforeRegister</code> - Before user registration</li>
+<li><code>afterRegister</code> - After successful registration</li>
+<li><code>beforeLogin</code> - Before login attempt</li>
+<li><code>afterLogin</code> - After successful login</li>
+<li><code>beforeTokenRefresh</code> - Before token refresh</li>
+<li><code>afterTokenRefresh</code> - After token refresh</li>
+</ul>
+<pre><code class="language-javascript">auth.on(&#39;afterRegister&#39;, async (result) =&gt; {
+  // Your custom logic
+  await sendWelcomeEmail(result.user.email);
+  await createUserProfile(result.user.id);
+});
+</code></pre>
+<h2 id="heading-20">🔌 Middleware Usage</h2><pre><code class="language-javascript">// Protect single route
+app.get(&#39;/api/protected&#39;, auth.middleware(), (req, res) =&gt; {
+  console.log(req.user); // { userId, email, iat, exp }
+  res.json({ message: &#39;Protected data&#39; });
+});
+
+// Protect multiple routes
+app.use(&#39;/api&#39;, auth.middleware());
+
+// Custom role-based middleware
+const requireAdmin = async (req, res, next) =&gt; {
+  const user = await auth.getUserById(req.user.userId);
+  if (user.role !== &#39;admin&#39;) {
+    return res.status(403).json({ error: &#39;Admin access required&#39; });
+  }
+  next();
+};
+
+app.get(&#39;/api/admin&#39;, auth.middleware(), requireAdmin, (req, res) =&gt; {
+  res.json({ message: &#39;Admin only&#39; });
+});
+</code></pre>
+<h2 id="heading-21">🧪 Testing</h2><pre><code class="language-bash"># Install dependencies
+npm install
+
+# Run example server
+npm run example
+
+# The server will start on http://localhost:3000
+</code></pre>
+<p>Test endpoints with curl:</p>
+<pre><code class="language-bash"># Register
+curl -X POST http://localhost:3000/auth/register \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;email&quot;:&quot;test@example.com&quot;,&quot;password&quot;:&quot;SecurePass123!&quot;}&#39;
+
+# Login
+curl -X POST http://localhost:3000/auth/login \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;email&quot;:&quot;test@example.com&quot;,&quot;password&quot;:&quot;SecurePass123!&quot;}&#39;
+</code></pre>
+<h2 id="heading-22">📚 Advanced Topics</h2><h3 id="heading-23">Environment Variables</h3><p>Create a <code>.env</code> file:</p>
+<pre><code class="language-env">DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=myapp
+DB_PORT=3306
+
+JWT_ACCESS_SECRET=your_super_secret_access_key
+JWT_REFRESH_SECRET=your_super_secret_refresh_key
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+BCRYPT_ROUNDS=10
+MAX_LOGIN_ATTEMPTS=5
+LOCKOUT_TIME=900000
+
+PORT=3000
+</code></pre>
+<h3 id="heading-24">Token Cleanup</h3><pre><code class="language-javascript">// Clean up expired tokens (run periodically)
+await auth.db.cleanupExpiredTokens(auth.options.tables.refreshTokens);
+
+// With cron job
+const cron = require(&#39;node-cron&#39;);
+cron.schedule(&#39;0 0 * * *&#39;, async () =&gt; {
+  await auth.db.cleanupExpiredTokens(auth.options.tables.refreshTokens);
+  console.log(&#39;Cleaned up expired tokens&#39;);
+});
+</code></pre>
+<h3 id="heading-25">Direct Database Access</h3><pre><code class="language-javascript">// Get raw database pool for custom queries
+const pool = auth.db.getPool();
+
+const [rows] = await pool.execute(
+  &#39;SELECT COUNT(*) as total FROM secure_auth_users WHERE isActive = ?&#39;,
+  [true]
+);
+
+console.log(&#39;Active users:&#39;, rows[0].total);
+</code></pre>
+<h2 id="heading-26">📚 Additional Guides</h2><ul>
+<li>📖 <a href="docs.html?doc=USER_DATA_ACCESS.md">Accessing User-Specific Data</a> - Complete guide on protecting routes and accessing user&#39;s posts, orders, etc.</li>
+<li>🔄 <a href="docs.html?doc=FLOW_DIAGRAM.md">Authentication Flow Diagram</a> - Visual guide showing how authentication works</li>
+<li>⚡ <a href="docs.html?doc=QUICK_REFERENCE_USER_DATA.md">Quick Reference</a> - Common patterns cheat sheet</li>
+<li>🚀 <a href="docs.html?doc=GETTING_STARTED.md">Getting Started</a> - Step-by-step setup guide</li>
+<li>🔒 <a href="docs.html?doc=SECURITY.md">Security Documentation</a> - <strong>Comprehensive security features and best practices</strong></li>
+<li>📋 <a href="docs.html?doc=SECURITY_AUDIT_REPORT.md">Security Audit Report</a> - <strong>Expert-level security audit results (49 issues resolved)</strong></li>
+</ul>
+<h2 id="heading-27">🔐 Security Features</h2><p>This package has undergone <strong>5 rounds of comprehensive security audits</strong> and implements industry best practices:</p>
+<ul>
+<li>✅ <strong>SQL Injection Protection</strong>: Parameterized queries + escaped identifiers</li>
+<li>✅ <strong>Token Hashing</strong>: SHA-256 hashing of refresh tokens in database</li>
+<li>✅ <strong>Email Normalization</strong>: Prevents duplicate accounts via case variations</li>
+<li>✅ <strong>Audit Logging</strong>: Configurable logging for all security events</li>
+<li>✅ <strong>Brute Force Protection</strong>: Account lockout after failed attempts</li>
+<li>✅ <strong>Password Security</strong>: Bcrypt with configurable rounds (4-31)</li>
+<li>✅ <strong>Input Validation</strong>: Multi-layer validation and sanitization</li>
+<li>✅ <strong>Secure Configuration</strong>: Validated defaults with safe fallbacks</li>
+</ul>
+<p><strong>Security Standards Compliance</strong>: OWASP Top 10, NIST Framework, PCI-DSS, GDPR</p>
+<p>See <a href="SECURITY.md">SECURITY.md</a> for complete security documentation and <a href="AUDIT-REPORT.md">AUDIT-REPORT.md</a> for detailed audit findings.</p>
+<h2 id="heading-28">🤝 Contributing</h2><p>Contributions are welcome! Please feel free to submit a Pull Request.</p>
+<h2 id="heading-29">📄 License</h2><p>MIT © 2025</p>
+<h2 id="heading-30">🔗 Links</h2><ul>
+<li><a href="https://github.com/yourusername/secure-node-auth">GitHub Repository</a></li>
+<li><a href="https://www.npmjs.com/package/secure-node-auth">NPM Package</a></li>
+<li><a href="https://github.com/yourusername/secure-node-auth/issues">Issue Tracker</a></li>
+</ul>
+<h2 id="heading-31">💡 Support</h2><p>If you find this package helpful, please consider:</p>
+<ul>
+<li>⭐ Starring the repository</li>
+<li>🐛 Reporting bugs</li>
+<li>💡 Suggesting new features</li>
+<li>📖 Improving documentation</li>
+</ul>
+<hr>
+<p><strong>Built with ❤️ for the Node.js community</strong></p>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="GETTING_STARTED.html" class="nav-button">
+        <span>Getting Started</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>

@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TypeScript Guide - Secure Node Auth</title>
+    <meta name="description" content="Full TypeScript support and type definitions for Secure Node Auth. Learn how to use with type safety." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="TypeScript Guide - Secure Node Auth" />
+    <meta property="og:description" content="Full TypeScript support and type definitions for Secure Node Auth. Learn how to use with type safety." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TypeScript Guide - Secure Node Auth" />
+    <meta name="twitter:description" content="Full TypeScript support and type definitions for Secure Node Auth. Learn how to use with type safety." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      TypeScript Guide
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      Table of Contents
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-2">
+      Installation
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-3">
+      Basic Setup
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-4">
+      Type Definitions
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-5">
+      SecureNodeAuthOptions
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-6">
+      User Type
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-7">
+      Authentication Result
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-8">
+      Configuration Types
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-9">
+      Connection Config
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-10">
+      JWT Config
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-11">
+      Security Config
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-12">
+      SMTP Config
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-13">
+      Method Types
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-14">
+      Register
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-15">
+      Login
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-16">
+      Verify Token
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-17">
+      Refresh Token
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-18">
+      Email Verification
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-19">
+      Express Integration
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-20">
+      Typed Middleware
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-21">
+      Typed Routes
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-22">
+      Fastify Integration
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-23">
+      Typed Fastify Plugin
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-24">
+      Fastify Type Extensions
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-25">
+      Custom Types
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-26">
+      Custom User Fields
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-27">
+      Type Guards
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-28">
+      Complete TypeScript Example
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-29">
+      Best Practices
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-30">
+      1. Use Environment Variables
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-31">
+      2. Strict Null Checks
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-32">
+      3. Type Assertions Safely
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-33">
+      4. Use Interfaces for Custom Data
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-34">
+      Troubleshooting
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-35">
+      Type Errors
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-36">
+      IntelliSense Not Working
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-37">
+      Custom Fields Not Typed
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-38">
+      Resources
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-39">
+      Support
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">TypeScript Guide</h1><p>SecureNodeAuth includes full TypeScript definitions for a better development experience with IntelliSense, type checking, and autocomplete.</p>
+<h2 id="heading-1">Table of Contents</h2><ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#basic-setup">Basic Setup</a></li>
+<li><a href="#type-definitions">Type Definitions</a></li>
+<li><a href="#configuration-types">Configuration Types</a></li>
+<li><a href="#method-types">Method Types</a></li>
+<li><a href="#express-integration">Express Integration</a></li>
+<li><a href="#fastify-integration">Fastify Integration</a></li>
+<li><a href="#custom-types">Custom Types</a></li>
+</ul>
+<h2 id="heading-2">Installation</h2><pre><code class="language-bash">npm install secure-node-auth
+# TypeScript definitions are included automatically
+</code></pre>
+<p>For TypeScript projects, ensure you have the necessary dependencies:</p>
+<pre><code class="language-bash">npm install --save-dev @types/node @types/express
+</code></pre>
+<h2 id="heading-3">Basic Setup</h2><pre><code class="language-typescript">import SecureAuth from &#39;secure-node-auth&#39;;
+import express, { Request, Response } from &#39;express&#39;;
+
+const app = express();
+app.use(express.json());
+
+// Initialize with full type safety
+const auth = new SecureAuth({
+  host: &#39;localhost&#39;,
+  user: &#39;root&#39;,
+  password: &#39;password&#39;,
+  database: &#39;myapp&#39;,
+  jwtSecret: process.env.JWT_SECRET || &#39;your-secret-key&#39;,
+});
+
+// Type-safe routes
+app.use(&#39;/auth&#39;, auth.routes());
+
+// Protected route with typed user
+app.get(&#39;/profile&#39;, auth.authenticate, (req: Request, res: Response) =&gt; {
+  // req.user is properly typed
+  res.json({ user: req.user });
+});
+
+app.listen(3000, () =&gt; {
+  console.log(&#39;Server running on port 3000&#39;);
+});
+</code></pre>
+<h2 id="heading-4">Type Definitions</h2><h3 id="heading-5">SecureNodeAuthOptions</h3><p>Main configuration interface:</p>
+<pre><code class="language-typescript">interface SecureNodeAuthOptions {
+  // MySQL Connection
+  host?: string;
+  user?: string;
+  password?: string;
+  database?: string;
+  port?: number;
+
+  // JWT Configuration
+  jwtSecret?: string;
+  jwtRefreshSecret?: string;
+  accessTokenExpiry?: string;
+  refreshTokenExpiry?: string;
+
+  // Security Settings
+  bcryptRounds?: number;
+  maxLoginAttempts?: number;
+  lockoutDuration?: number;
+
+  // Table Names
+  usersTable?: string;
+  tokensTable?: string;
+  verificationsTable?: string;
+
+  // Email Configuration
+  enableEmail?: boolean;
+  smtpConfig?: SMTPConfig;
+
+  // Custom Fields
+  customUserFields?: CustomFieldDefinition[];
+}
+</code></pre>
+<h3 id="heading-6">User Type</h3><pre><code class="language-typescript">interface User {
+  id: number;
+  email: string;
+  password?: string; // Hashed, never returned in responses
+  created_at: Date;
+  updated_at: Date;
+  is_verified?: boolean;
+  last_login?: Date;
+
+  // Custom fields are dynamically typed
+  [key: string]: any;
+}
+</code></pre>
+<h3 id="heading-7">Authentication Result</h3><pre><code class="language-typescript">interface AuthResult {
+  success: boolean;
+  user?: User;
+  accessToken?: string;
+  refreshToken?: string;
+  message?: string;
+  error?: string;
+}
+</code></pre>
+<h2 id="heading-8">Configuration Types</h2><h3 id="heading-9">Connection Config</h3><pre><code class="language-typescript">interface ConnectionConfig {
+  host?: string;
+  user?: string;
+  password?: string;
+  database?: string;
+  port?: number;
+  waitForConnections?: boolean;
+  connectionLimit?: number;
+  queueLimit?: number;
+}
+</code></pre>
+<h3 id="heading-10">JWT Config</h3><pre><code class="language-typescript">interface JWTConfig {
+  accessSecret?: string;
+  refreshSecret?: string;
+  accessExpiresIn?: string; // e.g., &#39;15m&#39;, &#39;1h&#39;, &#39;7d&#39;
+  refreshExpiresIn?: string; // e.g., &#39;7d&#39;, &#39;30d&#39;
+}
+</code></pre>
+<h3 id="heading-11">Security Config</h3><pre><code class="language-typescript">interface SecurityConfig {
+  bcryptRounds?: number;
+  maxLoginAttempts?: number;
+  lockoutTime?: number;
+  requireEmailVerification?: boolean;
+  passwordMinLength?: number;
+  passwordRequireUppercase?: boolean;
+  passwordRequireNumbers?: boolean;
+  passwordRequireSpecialChars?: boolean;
+}
+</code></pre>
+<h3 id="heading-12">SMTP Config</h3><pre><code class="language-typescript">interface SMTPConfig {
+  host: string;
+  port: number;
+  secure?: boolean;
+  auth: {
+    user: string;
+    pass: string;
+  };
+  from?: string;
+  fromName?: string;
+}
+</code></pre>
+<h2 id="heading-13">Method Types</h2><h3 id="heading-14">Register</h3><pre><code class="language-typescript">async register(data: RegisterData): Promise&lt;AuthResult&gt;
+
+interface RegisterData {
+  email: string;
+  password: string;
+  [key: string]: any; // Custom fields
+}
+</code></pre>
+<h3 id="heading-15">Login</h3><pre><code class="language-typescript">async login(credentials: LoginCredentials): Promise&lt;AuthResult&gt;
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+</code></pre>
+<h3 id="heading-16">Verify Token</h3><pre><code class="language-typescript">async verifyToken(token: string): Promise&lt;TokenPayload&gt;
+
+interface TokenPayload {
+  userId: number;
+  email: string;
+  iat: number;
+  exp: number;
+}
+</code></pre>
+<h3 id="heading-17">Refresh Token</h3><pre><code class="language-typescript">async refreshAccessToken(refreshToken: string): Promise&lt;TokenResult&gt;
+
+interface TokenResult {
+  success: boolean;
+  accessToken?: string;
+  message?: string;
+}
+</code></pre>
+<h3 id="heading-18">Email Verification</h3><pre><code class="language-typescript">async sendVerificationEmail(userId: number): Promise&lt;EmailResult&gt;
+async verifyEmail(token: string): Promise&lt;VerificationResult&gt;
+
+interface EmailResult {
+  success: boolean;
+  message: string;
+}
+
+interface VerificationResult {
+  success: boolean;
+  user?: User;
+  message: string;
+}
+</code></pre>
+<h2 id="heading-19">Express Integration</h2><h3 id="heading-20">Typed Middleware</h3><pre><code class="language-typescript">import { Request, Response, NextFunction } from &#39;express&#39;;
+
+// Extend Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
+// Use the middleware with proper types
+app.get(&#39;/protected&#39;, auth.authenticate, (req: Request, res: Response) =&gt; {
+  // req.user is typed as User | undefined
+  if (req.user) {
+    res.json({
+      email: req.user.email,
+      id: req.user.id,
+    });
+  }
+});
+</code></pre>
+<h3 id="heading-21">Typed Routes</h3><pre><code class="language-typescript">import { Router } from &#39;express&#39;;
+
+const router: Router = auth.routes();
+
+app.use(&#39;/auth&#39;, router);
+</code></pre>
+<h2 id="heading-22">Fastify Integration</h2><h3 id="heading-23">Typed Fastify Plugin</h3><pre><code class="language-typescript">import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from &#39;fastify&#39;;
+
+const fastify: FastifyInstance = Fastify({ logger: true });
+
+// Register with types
+await fastify.register(auth.fastifyPlugin);
+
+// Typed route with authentication
+fastify.get(
+  &#39;/profile&#39;,
+  {
+    preHandler: fastify.authenticate,
+  },
+  async (request: FastifyRequest, reply: FastifyReply) =&gt; {
+    // request.user is typed
+    return { user: request.user };
+  }
+);
+</code></pre>
+<h3 id="heading-24">Fastify Type Extensions</h3><pre><code class="language-typescript">declare module &#39;fastify&#39; {
+  interface FastifyRequest {
+    user?: User;
+  }
+
+  interface FastifyInstance {
+    authenticate: (request: FastifyRequest, reply: FastifyReply) =&gt; Promise&lt;void&gt;;
+  }
+}
+</code></pre>
+<h2 id="heading-25">Custom Types</h2><h3 id="heading-26">Custom User Fields</h3><pre><code class="language-typescript">interface CustomFieldDefinition {
+  name: string;
+  type: &#39;string&#39; | &#39;number&#39; | &#39;boolean&#39; | &#39;date&#39; | &#39;json&#39;;
+  required?: boolean;
+  default?: any;
+  validate?: (value: any) =&gt; boolean;
+}
+
+// Example with custom fields
+interface MyUser extends User {
+  firstName: string;
+  lastName: string;
+  age: number;
+  preferences: {
+    theme: string;
+    notifications: boolean;
+  };
+}
+
+const auth = new SecureAuth({
+  // ... config
+  customUserFields: [
+    { name: &#39;firstName&#39;, type: &#39;string&#39;, required: true },
+    { name: &#39;lastName&#39;, type: &#39;string&#39;, required: true },
+    { name: &#39;age&#39;, type: &#39;number&#39; },
+    { name: &#39;preferences&#39;, type: &#39;json&#39; },
+  ],
+});
+
+// Register with typed custom fields
+const result = await auth.register({
+  email: &#39;user@example.com&#39;,
+  password: &#39;securePass123&#39;,
+  firstName: &#39;John&#39;,
+  lastName: &#39;Doe&#39;,
+  age: 30,
+  preferences: {
+    theme: &#39;dark&#39;,
+    notifications: true,
+  },
+});
+</code></pre>
+<h3 id="heading-27">Type Guards</h3><pre><code class="language-typescript">// Type guard for checking if user is authenticated
+function isAuthenticated(user: User | undefined): user is User {
+  return user !== undefined;
+}
+
+// Usage
+app.get(&#39;/profile&#39;, auth.authenticate, (req: Request, res: Response) =&gt; {
+  if (isAuthenticated(req.user)) {
+    // TypeScript knows req.user is User here
+    res.json({ email: req.user.email });
+  } else {
+    res.status(401).json({ error: &#39;Not authenticated&#39; });
+  }
+});
+</code></pre>
+<h2 id="heading-28">Complete TypeScript Example</h2><pre><code class="language-typescript">import express, { Express, Request, Response, NextFunction } from &#39;express&#39;;
+import SecureAuth from &#39;secure-node-auth&#39;;
+
+// Define custom user interface
+interface MyAppUser extends User {
+  displayName: string;
+  role: &#39;user&#39; | &#39;admin&#39;;
+}
+
+// Initialize Express
+const app: Express = express();
+app.use(express.json());
+
+// Initialize SecureAuth with full configuration
+const auth = new SecureAuth({
+  host: process.env.DB_HOST || &#39;localhost&#39;,
+  user: process.env.DB_USER || &#39;root&#39;,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME || &#39;myapp&#39;,
+  port: parseInt(process.env.DB_PORT || &#39;3306&#39;),
+
+  jwtSecret: process.env.JWT_SECRET!,
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET!,
+  accessTokenExpiry: &#39;15m&#39;,
+  refreshTokenExpiry: &#39;7d&#39;,
+
+  bcryptRounds: 12,
+  maxLoginAttempts: 5,
+  lockoutDuration: 15 * 60 * 1000, // 15 minutes
+
+  enableEmail: true,
+  smtpConfig: {
+    host: process.env.SMTP_HOST!,
+    port: parseInt(process.env.SMTP_PORT || &#39;587&#39;),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER!,
+      pass: process.env.SMTP_PASS!,
+    },
+    from: &#39;noreply@myapp.com&#39;,
+    fromName: &#39;MyApp&#39;,
+  },
+
+  customUserFields: [
+    { name: &#39;displayName&#39;, type: &#39;string&#39;, required: true },
+    { name: &#39;role&#39;, type: &#39;string&#39;, default: &#39;user&#39; },
+  ],
+});
+
+// Authentication routes
+app.use(&#39;/auth&#39;, auth.routes());
+
+// Type-safe protected route
+app.get(&#39;/api/profile&#39;, auth.authenticate, async (req: Request, res: Response) =&gt; {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: &#39;Not authenticated&#39; });
+    }
+
+    const user = req.user as MyAppUser;
+    res.json({
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+    });
+  } catch (error) {
+    res.status(500).json({ error: &#39;Server error&#39; });
+  }
+});
+
+// Admin-only route with role check
+const requireAdmin = (req: Request, res: Response, next: NextFunction) =&gt; {
+  const user = req.user as MyAppUser;
+  if (user?.role === &#39;admin&#39;) {
+    next();
+  } else {
+    res.status(403).json({ error: &#39;Admin access required&#39; });
+  }
+};
+
+app.get(
+  &#39;/api/admin/users&#39;,
+  auth.authenticate,
+  requireAdmin,
+  async (req: Request, res: Response) =&gt; {
+    // Admin-only logic here
+    res.json({ message: &#39;Admin access granted&#39; });
+  }
+);
+
+// Error handling with types
+app.use((err: Error, req: Request, res: Response, next: NextFunction) =&gt; {
+  console.error(err.stack);
+  res.status(500).json({
+    error: &#39;Something went wrong&#39;,
+    message: process.env.NODE_ENV === &#39;development&#39; ? err.message : undefined,
+  });
+});
+
+// Start server
+const PORT = parseInt(process.env.PORT || &#39;3000&#39;);
+app.listen(PORT, () =&gt; {
+  console.log(`Server running on port ${PORT}`);
+});
+</code></pre>
+<h2 id="heading-29">Best Practices</h2><h3 id="heading-30">1. Use Environment Variables</h3><pre><code class="language-typescript">import dotenv from &#39;dotenv&#39;;
+dotenv.config();
+
+const auth = new SecureAuth({
+  host: process.env.DB_HOST!,
+  user: process.env.DB_USER!,
+  password: process.env.DB_PASSWORD!,
+  database: process.env.DB_NAME!,
+  jwtSecret: process.env.JWT_SECRET!,
+});
+</code></pre>
+<h3 id="heading-31">2. Strict Null Checks</h3><p>Enable <code>strictNullChecks</code> in <code>tsconfig.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;compilerOptions&quot;: {
+    &quot;strictNullChecks&quot;: true,
+    &quot;strict&quot;: true
+  }
+}
+</code></pre>
+<h3 id="heading-32">3. Type Assertions Safely</h3><pre><code class="language-typescript">// Good - with null check
+if (req.user) {
+  const user = req.user as MyAppUser;
+  console.log(user.displayName);
+}
+
+// Bad - without null check
+const user = req.user as MyAppUser; // Could be undefined!
+</code></pre>
+<h3 id="heading-33">4. Use Interfaces for Custom Data</h3><pre><code class="language-typescript">interface RegisterRequest {
+  email: string;
+  password: string;
+  displayName: string;
+}
+
+app.post(&#39;/register&#39;, async (req: Request, res: Response) =&gt; {
+  const data: RegisterRequest = req.body;
+  const result = await auth.register(data);
+  res.json(result);
+});
+</code></pre>
+<h2 id="heading-34">Troubleshooting</h2><h3 id="heading-35">Type Errors</h3><p>If you encounter type errors, ensure:</p>
+<ol>
+<li>TypeScript version &gt;= 4.0</li>
+<li><code>@types/node</code> and <code>@types/express</code> are installed</li>
+<li><code>tsconfig.json</code> has proper settings</li>
+</ol>
+<h3 id="heading-36">IntelliSense Not Working</h3><ol>
+<li>Restart your TypeScript server</li>
+<li>Check <code>node_modules/secure-node-auth/src/index.d.ts</code> exists</li>
+<li>Verify <code>package.json</code> has <code>&quot;types&quot;: &quot;src/index.d.ts&quot;</code></li>
+</ol>
+<h3 id="heading-37">Custom Fields Not Typed</h3><p>For custom fields, extend the User interface:</p>
+<pre><code class="language-typescript">declare module &#39;secure-node-auth&#39; {
+  interface User {
+    customField1?: string;
+    customField2?: number;
+  }
+}
+</code></pre>
+<h2 id="heading-38">Resources</h2><ul>
+<li><a href="https://www.typescriptlang.org/docs/handbook/intro.html">TypeScript Handbook</a></li>
+<li><a href="https://expressjs.com/en/advanced/typescript.html">Express with TypeScript</a></li>
+<li><a href="https://www.fastify.io/docs/latest/Reference/TypeScript/">Fastify with TypeScript</a></li>
+</ul>
+<h2 id="heading-39">Support</h2><p>For TypeScript-specific issues, please check:</p>
+<ul>
+<li>GitHub Issues: <a href="https://github.com/yourusername/secure-node-auth/issues">https://github.com/yourusername/secure-node-auth/issues</a></li>
+<li>Documentation: <a href="https://secure-node-auth.dev/docs/typescript">https://secure-node-auth.dev/docs/typescript</a></li>
+<li>Discord Community: <a href="https://discord.gg/secure-node-auth">https://discord.gg/secure-node-auth</a></li>
+</ul>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="HEADLESS_APPS_INDEX.html" class="nav-button-outline">
+        <i class="fas fa-arrow-left"></i>
+        <span>Headless Apps Index</span>
+      </a>
+      <a href="API_REFERENCE.html" class="nav-button">
+        <span>API Reference</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>

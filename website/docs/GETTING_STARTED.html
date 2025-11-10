@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Getting Started - Secure Node Auth</title>
+    <meta name="description" content="Step-by-step guide to set up Secure Node Auth in your Node.js application with Express or Fastify." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Getting Started - Secure Node Auth" />
+    <meta property="og:description" content="Step-by-step guide to set up Secure Node Auth in your Node.js application with Express or Fastify." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Getting Started - Secure Node Auth" />
+    <meta name="twitter:description" content="Step-by-step guide to set up Secure Node Auth in your Node.js application with Express or Fastify." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      🚀 Getting Started with Secure Node Auth
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      Prerequisites
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-2">
+      Step-by-Step Setup
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-3">
+      1. Create Your Project
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-4">
+      2. Install Secure Node Auth
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-5">
+      3. Set Up MySQL Database
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-6">
+      4. Create Environment File
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-7">
+      5. Create Your Server
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-8">
+      6. Run Your Server
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-9">
+      7. Test Your API
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-10">
+      🎯 What Was Created Automatically?
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-11">
+      📡 Available Endpoints
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-12">
+      🎨 Next Steps
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-13">
+      Add Custom Fields
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-14">
+      Add Custom Logic with Hooks
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-15">
+      Protect Your Routes
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-16">
+      Add Role-Based Access Control
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-17">
+      🐛 Troubleshooting
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-18">
+      "Cannot connect to MySQL"
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-19">
+      "Table already exists"
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-20">
+      "Invalid token" / "Token expired"
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-21">
+      "Too many requests"
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-22">
+      📚 Full Documentation
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-23">
+      💡 Tips
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-24">
+      🆘 Need Help?
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-25">
+      🎉 You're Ready!
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">🚀 Getting Started with Secure Node Auth</h1><h2 id="heading-1">Prerequisites</h2><p>Before you begin, ensure you have:</p>
+<ul>
+<li><strong>Node.js</strong> v14 or higher</li>
+<li><strong>MySQL</strong> 5.7+ or MariaDB 10.2+</li>
+<li><strong>npm</strong> or <strong>yarn</strong></li>
+</ul>
+<h2 id="heading-2">Step-by-Step Setup</h2><h3 id="heading-3">1. Create Your Project</h3><pre><code class="language-bash">mkdir my-auth-app
+cd my-auth-app
+npm init -y
+</code></pre>
+<h3 id="heading-4">2. Install Secure Node Auth</h3><pre><code class="language-bash">npm install secure-node-auth express dotenv
+</code></pre>
+<h3 id="heading-5">3. Set Up MySQL Database</h3><p>Connect to MySQL and create a database:</p>
+<pre><code class="language-sql">CREATE DATABASE myapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+</code></pre>
+<p>That&#39;s it! The package will automatically create all necessary tables.</p>
+<h3 id="heading-6">4. Create Environment File</h3><p>Create <code>.env</code> in your project root:</p>
+<pre><code class="language-env"># Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=myapp
+DB_PORT=3306
+
+# JWT Secrets (CHANGE THESE!)
+JWT_ACCESS_SECRET=your_super_secret_access_key_min_32_chars
+JWT_REFRESH_SECRET=your_super_secret_refresh_key_min_32_chars
+
+# JWT Expiration
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Security Settings
+BCRYPT_ROUNDS=10
+MAX_LOGIN_ATTEMPTS=5
+LOCKOUT_TIME=900000
+
+# Server
+PORT=3000
+NODE_ENV=development
+</code></pre>
+<p><strong>⚠️ IMPORTANT:</strong> Generate strong random secrets for production:</p>
+<pre><code class="language-bash">node -e &quot;console.log(require(&#39;crypto&#39;).randomBytes(32).toString(&#39;hex&#39;))&quot;
+</code></pre>
+<h3 id="heading-7">5. Create Your Server</h3><p>Create <code>server.js</code>:</p>
+<pre><code class="language-javascript">require(&#39;dotenv&#39;).config();
+const express = require(&#39;express&#39;);
+const SecureNodeAuth = require(&#39;secure-node-auth&#39;);
+
+const app = express();
+app.use(express.json());
+
+// Initialize authentication
+const auth = new SecureNodeAuth();
+
+// Initialize and start server
+auth.init()
+  .then(() =&gt; {
+    console.log(&#39;✅ Auth system initialized&#39;);
+    
+    // Mount auth routes
+    app.use(&#39;/auth&#39;, auth.router());
+    
+    // Example protected route
+    app.get(&#39;/api/profile&#39;, auth.middleware(), async (req, res) =&gt; {
+      const user = await auth.getUserById(req.user.userId);
+      res.json({ user });
+    });
+    
+    // Start server
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () =&gt; {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📚 Docs: http://localhost:${PORT}/auth/health`);
+    });
+  })
+  .catch(error =&gt; {
+    console.error(&#39;❌ Initialization failed:&#39;, error.message);
+    process.exit(1);
+  });
+</code></pre>
+<h3 id="heading-8">6. Run Your Server</h3><pre><code class="language-bash">node server.js
+</code></pre>
+<p>You should see:</p>
+<pre><code>✅ Auth system initialized
+🚀 Server running on http://localhost:3000
+</code></pre>
+<h3 id="heading-9">7. Test Your API</h3><p><strong>Register a user:</strong></p>
+<pre><code class="language-bash">curl -X POST http://localhost:3000/auth/register \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;email&quot;:&quot;test@example.com&quot;,&quot;password&quot;:&quot;SecurePass123!&quot;,&quot;firstName&quot;:&quot;John&quot;}&#39;
+</code></pre>
+<p><strong>Login:</strong></p>
+<pre><code class="language-bash">curl -X POST http://localhost:3000/auth/login \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;email&quot;:&quot;test@example.com&quot;,&quot;password&quot;:&quot;SecurePass123!&quot;}&#39;
+</code></pre>
+<p>Save the <code>accessToken</code> from the response!</p>
+<p><strong>Get profile:</strong></p>
+<pre><code class="language-bash">curl -X GET http://localhost:3000/auth/me \
+  -H &quot;Authorization: Bearer YOUR_ACCESS_TOKEN&quot;
+</code></pre>
+<h2 id="heading-10">🎯 What Was Created Automatically?</h2><p>When you ran <code>auth.init()</code>, these tables were created:</p>
+<ol>
+<li><strong>secure_auth_users</strong> - User accounts</li>
+<li><strong>secure_auth_refresh_tokens</strong> - JWT refresh tokens</li>
+<li><strong>secure_auth_login_attempts</strong> - Login attempt tracking</li>
+</ol>
+<p>Check them out:</p>
+<pre><code class="language-sql">USE myapp;
+SHOW TABLES;
+DESCRIBE secure_auth_users;
+</code></pre>
+<h2 id="heading-11">📡 Available Endpoints</h2><p>After mounting <code>auth.router()</code>, you get these endpoints:</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/auth/register</code></td>
+<td>POST</td>
+<td>Register new user</td>
+</tr>
+<tr>
+<td><code>/auth/login</code></td>
+<td>POST</td>
+<td>Login user</td>
+</tr>
+<tr>
+<td><code>/auth/refresh</code></td>
+<td>POST</td>
+<td>Refresh access token</td>
+</tr>
+<tr>
+<td><code>/auth/logout</code></td>
+<td>POST</td>
+<td>Logout (revoke token)</td>
+</tr>
+<tr>
+<td><code>/auth/logout-all</code></td>
+<td>POST</td>
+<td>Logout all devices</td>
+</tr>
+<tr>
+<td><code>/auth/me</code></td>
+<td>GET</td>
+<td>Get current user</td>
+</tr>
+<tr>
+<td><code>/auth/me</code></td>
+<td>PATCH</td>
+<td>Update profile</td>
+</tr>
+<tr>
+<td><code>/auth/change-password</code></td>
+<td>POST</td>
+<td>Change password</td>
+</tr>
+<tr>
+<td><code>/auth/verify</code></td>
+<td>POST</td>
+<td>Verify token</td>
+</tr>
+<tr>
+<td><code>/auth/health</code></td>
+<td>GET</td>
+<td>Health check</td>
+</tr>
+</tbody></table>
+<h2 id="heading-12">🎨 Next Steps</h2><h3 id="heading-13">Add Custom Fields</h3><pre><code class="language-javascript">const auth = new SecureNodeAuth();
+
+// Add fields BEFORE init()
+auth.addField({ 
+  name: &#39;phoneNumber&#39;, 
+  type: &#39;VARCHAR(20)&#39;,
+  unique: true 
+});
+
+await auth.init();
+</code></pre>
+<h3 id="heading-14">Add Custom Logic with Hooks</h3><pre><code class="language-javascript">auth.on(&#39;afterRegister&#39;, async (result) =&gt; {
+  console.log(&#39;New user:&#39;, result.user.email);
+  // Send welcome email
+  // Create user profile
+  // Track analytics
+});
+
+auth.on(&#39;afterLogin&#39;, async (result) =&gt; {
+  console.log(&#39;User logged in:&#39;, result.user.email);
+  // Update last login time
+  // Track login location
+});
+</code></pre>
+<h3 id="heading-15">Protect Your Routes</h3><pre><code class="language-javascript">// Protect single route
+app.get(&#39;/api/secret&#39;, auth.middleware(), (req, res) =&gt; {
+  res.json({ secret: &#39;data&#39;, userId: req.user.userId });
+});
+
+// Protect all routes under /api
+app.use(&#39;/api&#39;, auth.middleware());
+</code></pre>
+<h3 id="heading-16">Add Role-Based Access Control</h3><pre><code class="language-javascript">// Add role field
+auth.addField({ 
+  name: &#39;role&#39;, 
+  type: &quot;ENUM(&#39;user&#39;, &#39;admin&#39;)&quot;,
+  defaultValue: &#39;user&#39;
+});
+
+// Create role middleware
+const requireAdmin = async (req, res, next) =&gt; {
+  const user = await auth.getUserById(req.user.userId);
+  if (user.role !== &#39;admin&#39;) {
+    return res.status(403).json({ error: &#39;Admin access required&#39; });
+  }
+  next();
+};
+
+// Use it
+app.get(&#39;/api/admin&#39;, auth.middleware(), requireAdmin, (req, res) =&gt; {
+  res.json({ message: &#39;Admin only area&#39; });
+});
+</code></pre>
+<h2 id="heading-17">🐛 Troubleshooting</h2><h3 id="heading-18">"Cannot connect to MySQL"</h3><ul>
+<li>Ensure MySQL is running: <code>mysql.server start</code> (Mac) or <code>net start mysql</code> (Windows)</li>
+<li>Check credentials in <code>.env</code></li>
+<li>Verify database exists: <code>mysql -u root -p -e &quot;SHOW DATABASES;&quot;</code></li>
+</ul>
+<h3 id="heading-19">"Table already exists"</h3><ul>
+<li>Normal on restart - tables are created once</li>
+<li>To reset: Drop database and restart: <code>DROP DATABASE myapp; CREATE DATABASE myapp;</code></li>
+</ul>
+<h3 id="heading-20">"Invalid token" / "Token expired"</h3><ul>
+<li>Access tokens expire after 15 minutes</li>
+<li>Use refresh token to get new access token</li>
+<li>POST to <code>/auth/refresh</code> with <code>refreshToken</code> in body</li>
+</ul>
+<h3 id="heading-21">"Too many requests"</h3><ul>
+<li>Rate limiting is active (10 requests/15 minutes)</li>
+<li>Wait or disable: <code>auth.router({ enableRateLimit: false })</code></li>
+</ul>
+<h2 id="heading-22">📚 Full Documentation</h2><ul>
+<li><a href="../README.md">README.md</a> - Complete API reference</li>
+<li><a href="QUICK_START.md">QUICK_START.md</a> - Quick reference guide</li>
+<li><a href="SECURITY.md">SECURITY.md</a> - Security best practices</li>
+<li><a href="../examples/">examples/</a> - Working examples</li>
+</ul>
+<h2 id="heading-23">💡 Tips</h2><p>✅ <strong>Do:</strong></p>
+<ul>
+<li>Use environment variables for secrets</li>
+<li>Generate strong random JWT secrets</li>
+<li>Use HTTPS in production</li>
+<li>Implement rate limiting</li>
+<li>Add logging for security events</li>
+<li>Keep dependencies updated</li>
+</ul>
+<p>❌ <strong>Don&#39;t:</strong></p>
+<ul>
+<li>Commit <code>.env</code> to git</li>
+<li>Use default JWT secrets in production</li>
+<li>Store tokens in localStorage</li>
+<li>Expose detailed error messages to users</li>
+<li>Allow weak passwords</li>
+</ul>
+<h2 id="heading-24">🆘 Need Help?</h2><ul>
+<li>Check <a href="../examples/">examples/</a> for working code</li>
+<li>Read <a href="../docs/">docs/</a> for detailed guides</li>
+<li>Open an issue on GitHub</li>
+<li>Check existing issues for solutions</li>
+</ul>
+<h2 id="heading-25">🎉 You're Ready!</h2><p>You now have a production-ready authentication system! Start building your app with confidence.</p>
+<p><strong>Happy coding! 🚀</strong></p>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="README.html" class="nav-button-outline">
+        <i class="fas fa-arrow-left"></i>
+        <span>README</span>
+      </a>
+      <a href="QUICK_START.html" class="nav-button">
+        <span>Quick Start</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>

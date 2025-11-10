@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Headless Apps Index - Secure Node Auth</title>
+    <meta name="description" content="Complete index and navigation for headless apps authentication guides." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Headless Apps Index - Secure Node Auth" />
+    <meta property="og:description" content="Complete index and navigation for headless apps authentication guides." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Headless Apps Index - Secure Node Auth" />
+    <meta name="twitter:description" content="Complete index and navigation for headless apps authentication guides." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      Building Headless Apps with SecureNodeAuth
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      Complete Guide Index
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-2">
+      📚 Guide Structure
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-3">
+      [Part 1: Foundation](HEADLESS_APPS_GUIDE.md)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-4">
+      [Part 2: Additional Features](HEADLESS_APPS_GUIDE_PART2.md)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-5">
+      [Part 3: Advanced Features](HEADLESS_APPS_GUIDE_PART3.md)
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-6">
+      🎯 Use Cases
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-7">
+      Financial Apps
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-8">
+      Productivity Apps
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-9">
+      Lifestyle Apps
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-10">
+      Business Apps
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-11">
+      🏗️ Architecture Pattern
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-12">
+      💡 Quick Start
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-13">
+      1. Install Dependencies
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-14">
+      2. Setup Environment
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-15">
+      3. Initialize SecureNodeAuth
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-16">
+      4. Create Your Application Tables
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-17">
+      5. Protect Your Routes
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-18">
+      🔑 Key Features Demonstrated
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-19">
+      Authentication & Security
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-20">
+      Database Design
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-21">
+      API Design
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-22">
+      Frontend Integration
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-23">
+      📖 Code Examples
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-24">
+      Backend: Fetch User's Transactions
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-25">
+      Frontend: Call Protected API
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-26">
+      Mobile: Login Flow
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-27">
+      🚀 Next Steps
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-28">
+      🛡️ Security Highlights
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-29">
+      📞 Support & Resources
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">Building Headless Apps with SecureNodeAuth</h1><h2 id="heading-1">Complete Guide Index</h2><p>This comprehensive guide shows you how to use SecureNodeAuth as the authentication foundation for complex headless applications like income/expense trackers, task managers, CRM systems, and more.</p>
+<hr>
+<h2 id="heading-2">📚 Guide Structure</h2><h3 id="heading-3">[Part 1: Foundation](HEADLESS_APPS_GUIDE.md)</h3><p><strong>Setup, Database Schema, Core Backend</strong></p>
+<ul>
+<li>✅ Architecture Overview (Headless design pattern)</li>
+<li>✅ Database Schema Design (Complex relationships with foreign keys)</li>
+<li>✅ Backend Setup (Project structure, environment config)</li>
+<li>✅ Main Server File (Express + SecureNodeAuth integration)</li>
+<li>✅ Auth Routes (Registration with auto-setup)</li>
+<li>✅ Transaction Routes (Full CRUD with filtering, pagination)</li>
+</ul>
+<p><strong>What You&#39;ll Learn:</strong></p>
+<ul>
+<li>How to separate authentication from application data</li>
+<li>Designing complex database schemas with foreign keys</li>
+<li>Auto-creating application tables alongside auth tables</li>
+<li>Implementing filtered and paginated endpoints</li>
+<li>Using database transactions for data consistency</li>
+</ul>
+<hr>
+<h3 id="heading-4">[Part 2: Additional Features](HEADLESS_APPS_GUIDE_PART2.md)</h3><p><strong>Categories, Accounts, Budgets, Frontend Integration</strong></p>
+<ul>
+<li>✅ Category Routes (Income/Expense categories with soft delete)</li>
+<li>✅ Account Routes (Bank accounts, wallets, balances)</li>
+<li>✅ Budget Routes (Monthly spending limits with alerts)</li>
+<li>✅ React Frontend (Complete web app with auth context)</li>
+<li>✅ API Service Layer (Axios with token refresh interceptor)</li>
+<li>✅ Protected Routes (Auth-guarded components)</li>
+<li>✅ Dashboard Component (Real-time stats and summaries)</li>
+</ul>
+<p><strong>What You&#39;ll Learn:</strong></p>
+<ul>
+<li>Implementing soft deletes (for records with dependencies)</li>
+<li>Aggregating data across multiple tables</li>
+<li>Building reusable API service layers</li>
+<li>Token refresh automation in frontend</li>
+<li>Context API for global auth state</li>
+</ul>
+<hr>
+<h3 id="heading-5">[Part 3: Advanced Features](HEADLESS_APPS_GUIDE_PART3.md)</h3><p><strong>Complex Operations, Mobile, Production Best Practices</strong></p>
+<ul>
+<li>✅ Database Transactions (Account transfers with rollback)</li>
+<li>✅ Recurring Transactions (Cron jobs for automation)</li>
+<li>✅ Budget Alerts (Real-time monitoring)</li>
+<li>✅ React Native Integration (Mobile app setup)</li>
+<li>✅ AsyncStorage (Mobile token management)</li>
+<li>✅ Security Best Practices (HTTPS, rate limiting, validation)</li>
+<li>✅ Error Handling (Centralized error middleware)</li>
+<li>✅ Database Backups (Automated backup scripts)</li>
+<li>✅ Performance Monitoring (Request timing, slow query detection)</li>
+<li>✅ Production Deployment Checklist</li>
+</ul>
+<p><strong>What You&#39;ll Learn:</strong></p>
+<ul>
+<li>Implementing ACID transactions for complex operations</li>
+<li>Building scheduled background jobs</li>
+<li>Mobile app authentication patterns</li>
+<li>Production-grade security measures</li>
+<li>Monitoring and maintaining production systems</li>
+</ul>
+<hr>
+<h2 id="heading-6">🎯 Use Cases</h2><p>This guide&#39;s patterns apply to many types of applications:</p>
+<h3 id="heading-7">Financial Apps</h3><ul>
+<li>✅ Income/Expense Tracker (this guide&#39;s example)</li>
+<li>✅ Budget Manager</li>
+<li>✅ Investment Portfolio Tracker</li>
+<li>✅ Invoice/Billing System</li>
+</ul>
+<h3 id="heading-8">Productivity Apps</h3><ul>
+<li>✅ Task/Project Manager</li>
+<li>✅ Time Tracker</li>
+<li>✅ Note-Taking App</li>
+<li>✅ CRM System</li>
+</ul>
+<h3 id="heading-9">Lifestyle Apps</h3><ul>
+<li>✅ Fitness Tracker</li>
+<li>✅ Meal Planner</li>
+<li>✅ Habit Tracker</li>
+<li>✅ Travel Planner</li>
+</ul>
+<h3 id="heading-10">Business Apps</h3><ul>
+<li>✅ Inventory Management</li>
+<li>✅ Order Management</li>
+<li>✅ Customer Portal</li>
+<li>✅ Employee Management</li>
+</ul>
+<hr>
+<h2 id="heading-11">🏗️ Architecture Pattern</h2><pre><code>┌─────────────────────────────────────────────────────────────┐
+│                        Frontend Layer                        │
+│  (React / React Native / Vue / Angular / Mobile App)        │
+└────────────────────┬────────────────────────────────────────┘
+                     │ REST API (JSON)
+                     │ JWT Bearer Tokens
+┌────────────────────▼────────────────────────────────────────┐
+│                      Node.js Backend                         │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │          SecureNodeAuth (Auth Layer)                 │   │
+│  │  - User Registration &amp; Login                        │   │
+│  │  - JWT Token Management                             │   │
+│  │  - Password Security (Bcrypt)                       │   │
+│  │  - Account Lockout                                  │   │
+│  │  - Audit Logging                                    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │          Your Application Logic                      │   │
+│  │  - Transactions                                     │   │
+│  │  - Categories                                       │   │
+│  │  - Accounts                                         │   │
+│  │  - Budgets                                          │   │
+│  │  - Reports                                          │   │
+│  │  - Any Custom Features                             │   │
+│  └─────────────────────────────────────────────────────┘   │
+└────────────────────┬────────────────────────────────────────┘
+                     │ SQL Queries
+┌────────────────────▼────────────────────────────────────────┐
+│                      MySQL Database                          │
+│  ┌──────────────────┐  ┌──────────────────────────────┐   │
+│  │  Auth Tables     │  │  Application Tables          │   │
+│  │  (Auto-created)  │  │  (Your custom schema)        │   │
+│  │                  │  │                              │   │
+│  │  • users         │  │  • transactions              │   │
+│  │  • refresh_tokens│  │  • categories                │   │
+│  │  • login_attempts│  │  • accounts                  │   │
+│  └──────────────────┘  │  • budgets                   │   │
+│                        │  • recurring_transactions    │   │
+│                        │  • user_preferences          │   │
+│                        └──────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Key Principles:</strong></p>
+<ol>
+<li><strong>Separation of Concerns</strong>: Auth (SecureNodeAuth) vs Application Logic</li>
+<li><strong>Data Isolation</strong>: Foreign keys ensure users only access their data</li>
+<li><strong>Stateless Authentication</strong>: JWT tokens enable horizontal scaling</li>
+<li><strong>Defense in Depth</strong>: Multiple security layers (auth + validation + SQL protection)</li>
+</ol>
+<hr>
+<h2 id="heading-12">💡 Quick Start</h2><h3 id="heading-13">1. Install Dependencies</h3><pre><code class="language-bash">npm install express dotenv cors mysql2 secure-node-auth
+</code></pre>
+<h3 id="heading-14">2. Setup Environment</h3><pre><code class="language-env">DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=your_app
+JWT_ACCESS_SECRET=min-32-chars-random-string
+JWT_REFRESH_SECRET=different-32-chars-random-string
+</code></pre>
+<h3 id="heading-15">3. Initialize SecureNodeAuth</h3><pre><code class="language-javascript">const SecureNodeAuth = require(&#39;secure-node-auth&#39;);
+
+const auth = new SecureNodeAuth({
+  db: {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+  },
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET
+  }
+});
+
+await auth.init(); // Creates auth tables
+</code></pre>
+<h3 id="heading-16">4. Create Your Application Tables</h3><pre><code class="language-javascript">// Your custom schema
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS your_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
+    /* your columns here */
+    FOREIGN KEY (userId) REFERENCES secure_auth_users(id) ON DELETE CASCADE
+  )
+`);
+</code></pre>
+<h3 id="heading-17">5. Protect Your Routes</h3><pre><code class="language-javascript">// Use SecureNodeAuth middleware
+app.get(&#39;/api/data&#39;, auth.middleware(), async (req, res) =&gt; {
+  const userId = req.user.userId; // Auto-populated from JWT
+  
+  // Fetch only user&#39;s data
+  const [rows] = await pool.execute(
+    &#39;SELECT * FROM your_data WHERE userId = ?&#39;,
+    [userId]
+  );
+  
+  res.json({ data: rows });
+});
+</code></pre>
+<hr>
+<h2 id="heading-18">🔑 Key Features Demonstrated</h2><h3 id="heading-19">Authentication & Security</h3><ul>
+<li>✅ JWT-based authentication (access + refresh tokens)</li>
+<li>✅ Bcrypt password hashing</li>
+<li>✅ Account lockout after failed attempts</li>
+<li>✅ Token refresh automation</li>
+<li>✅ Audit logging for security events</li>
+<li>✅ SQL injection protection</li>
+<li>✅ Input validation and sanitization</li>
+</ul>
+<h3 id="heading-20">Database Design</h3><ul>
+<li>✅ Foreign keys for data relationships</li>
+<li>✅ Cascading deletes (when user deleted, their data is too)</li>
+<li>✅ Soft deletes (mark inactive instead of delete)</li>
+<li>✅ Indexes for query performance</li>
+<li>✅ Transactions for data consistency</li>
+<li>✅ JSON columns for flexible data (tags, preferences)</li>
+</ul>
+<h3 id="heading-21">API Design</h3><ul>
+<li>✅ RESTful endpoints</li>
+<li>✅ Pagination for large datasets</li>
+<li>✅ Filtering and sorting</li>
+<li>✅ Aggregated statistics</li>
+<li>✅ Error handling with proper HTTP status codes</li>
+<li>✅ Rate limiting</li>
+<li>✅ CORS configuration</li>
+</ul>
+<h3 id="heading-22">Frontend Integration</h3><ul>
+<li>✅ Token storage (localStorage for web, AsyncStorage for mobile)</li>
+<li>✅ Automatic token refresh</li>
+<li>✅ Protected routes</li>
+<li>✅ Auth context for global state</li>
+<li>✅ API service layer</li>
+<li>✅ Error handling</li>
+</ul>
+<hr>
+<h2 id="heading-23">📖 Code Examples</h2><h3 id="heading-24">Backend: Fetch User's Transactions</h3><pre><code class="language-javascript">router.get(&#39;/transactions&#39;, auth.middleware(), async (req, res) =&gt; {
+  const userId = req.user.userId;
+  
+  const [transactions] = await pool.execute(`
+    SELECT t.*, c.name as category, a.name as account
+    FROM transactions t
+    JOIN categories c ON t.categoryId = c.id
+    JOIN accounts a ON t.accountId = a.id
+    WHERE t.userId = ?
+    ORDER BY t.transactionDate DESC
+    LIMIT 50
+  `, [userId]);
+  
+  res.json({ success: true, data: transactions });
+});
+</code></pre>
+<h3 id="heading-25">Frontend: Call Protected API</h3><pre><code class="language-javascript">// React
+import { transactionAPI } from &#39;./services/api&#39;;
+
+function TransactionList() {
+  const [transactions, setTransactions] = useState([]);
+  
+  useEffect(() =&gt; {
+    async function fetchData() {
+      const response = await transactionAPI.getAll();
+      setTransactions(response.data);
+    }
+    fetchData();
+  }, []);
+  
+  return (
+    &lt;div&gt;
+      {transactions.map(t =&gt; (
+        &lt;div key={t.id}&gt;{t.description} - ${t.amount}&lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<h3 id="heading-26">Mobile: Login Flow</h3><pre><code class="language-javascript">// React Native
+import { authAPI } from &#39;./services/api&#39;;
+
+async function handleLogin(email, password) {
+  try {
+    const response = await authAPI.login(email, password);
+    // Tokens automatically stored in AsyncStorage
+    navigation.navigate(&#39;Dashboard&#39;);
+  } catch (error) {
+    Alert.alert(&#39;Error&#39;, error.message);
+  }
+}
+</code></pre>
+<hr>
+<h2 id="heading-27">🚀 Next Steps</h2><ol>
+<li><strong>Read the Guides</strong>: Start with Part 1, then move to Parts 2 &amp; 3</li>
+<li><strong>Clone the Example</strong>: Use the code as a starting point</li>
+<li><strong>Customize Schema</strong>: Replace transactions/categories with your data model</li>
+<li><strong>Add Features</strong>: Build on top of the authentication foundation</li>
+<li><strong>Deploy</strong>: Follow the production checklist in Part 3</li>
+</ol>
+<hr>
+<h2 id="heading-28">🛡️ Security Highlights</h2><p>All examples follow security best practices:</p>
+<ul>
+<li>✅ Environment variables for secrets</li>
+<li>✅ Parameterized SQL queries (no SQL injection)</li>
+<li>✅ JWT validation on all protected routes</li>
+<li>✅ User data isolation via foreign keys</li>
+<li>✅ Rate limiting on endpoints</li>
+<li>✅ Input validation and sanitization</li>
+<li>✅ HTTPS enforcement (production)</li>
+<li>✅ Audit logging for security events</li>
+<li>✅ Token hashing in database</li>
+<li>✅ Email normalization</li>
+</ul>
+<p>Reviewed by dual security experts with 50 years combined experience!</p>
+<hr>
+<h2 id="heading-29">📞 Support & Resources</h2><ul>
+<li><strong>Main Documentation</strong>: <a href="../README.md">README.md</a></li>
+<li><strong>Security Guide</strong>: <a href="../SECURITY.md">SECURITY.md</a></li>
+<li><strong>Security Audit</strong>: <a href="../EXPERT-PANEL-AUDIT.md">EXPERT-PANEL-AUDIT.md</a></li>
+<li><strong>User Data Access</strong>: <a href="USER_DATA_ACCESS.md">USER_DATA_ACCESS.md</a></li>
+</ul>
+<hr>
+<p><strong>Built with ❤️ to help developers build secure, scalable headless applications!</strong></p>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="HEADLESS_APPS_GUIDE_PART3.html" class="nav-button-outline">
+        <i class="fas fa-arrow-left"></i>
+        <span>Headless Apps (Part 3)</span>
+      </a>
+      <a href="TYPESCRIPT_GUIDE.html" class="nav-button">
+        <span>TypeScript Guide</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>

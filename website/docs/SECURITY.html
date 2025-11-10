@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Security Guide - Secure Node Auth</title>
+    <meta name="description" content="Comprehensive security documentation covering SQL injection protection, password security, token management, and best practices." />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Security Guide - Secure Node Auth" />
+    <meta property="og:description" content="Comprehensive security documentation covering SQL injection protection, password security, token management, and best practices." />
+    <meta property="og:site_name" content="Secure Node Auth" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Security Guide - Secure Node Auth" />
+    <meta name="twitter:description" content="Comprehensive security documentation covering SQL injection protection, password security, token management, and best practices." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#667eea',
+              secondary: '#764ba2',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+      }
+
+      /* Sidebar styles */
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        overflow-y: auto;
+        background: #1a202c;
+        border-right: 1px solid #2d3748;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #1a202c;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .content-wrapper {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .content-wrapper.expanded {
+        margin-left: 0;
+      }
+
+      /* TOC styles */
+      .toc-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+
+      .toc-item:hover {
+        background: #2d3748;
+        border-left-color: #667eea;
+      }
+
+      .toc-item.active {
+        background: #2d3748;
+        border-left-color: #667eea;
+        color: #667eea;
+      }
+
+      .toc-h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .toc-h3 {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+        color: #a0aec0;
+      }
+
+      /* Markdown styles */
+      .markdown-body {
+        color: #e1e4e8;
+        line-height: 1.8;
+      }
+
+      .markdown-body h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: #8b9cdb;
+        scroll-margin-top: 80px;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #a0aec0;
+      }
+
+      .markdown-body p {
+        margin-bottom: 1rem;
+      }
+
+      .markdown-body ul,
+      .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+      }
+
+      .markdown-body li {
+        margin-bottom: 0.5rem;
+      }
+
+      .markdown-body code {
+        background: #1a1a2e;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Consolas', 'Monaco', monospace;
+      }
+
+      .markdown-body pre {
+        background: #1a1a2e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border: 1px solid #2d3748;
+      }
+
+      .markdown-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .markdown-body a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .markdown-body a:hover {
+        color: #8b9cdb;
+        text-decoration: underline;
+      }
+
+      .markdown-body blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: #a0aec0;
+        background: #1a202c;
+        padding: 1rem;
+        border-radius: 0.25rem;
+      }
+
+      .markdown-body table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+      }
+
+      .markdown-body th,
+      .markdown-body td {
+        border: 1px solid #4a5568;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      .markdown-body th {
+        background: #2d3748;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .markdown-body tr:hover {
+        background: #1a202c;
+      }
+
+      .markdown-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+      }
+
+      .markdown-body hr {
+        border: none;
+        border-top: 2px solid #2d3748;
+        margin: 2rem 0;
+      }
+
+      /* Navigation buttons */
+      .nav-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .nav-button-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+      }
+
+      .nav-button-outline:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.mobile-open {
+          transform: translateX(0);
+          z-index: 40;
+        }
+
+        .content-wrapper {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Top Navigation -->
+    <nav
+      class="fixed w-full top-0 z-50 bg-gray-900 border-b border-gray-800 backdrop-blur-lg bg-opacity-95"
+    >
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button
+              id="sidebar-toggle"
+              class="text-2xl text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
+            <a href="/" class="flex items-center space-x-2">
+              <i class="fas fa-shield-alt text-primary text-2xl"></i>
+              <span class="text-xl font-bold">SecureNodeAuth</span>
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="flex items-center gap-2 text-gray-300 hover:text-primary transition"
+            >
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar with TOC -->
+    <aside id="sidebar" class="sidebar">
+      <div class="p-4">
+        <h3 class="text-sm font-bold text-gray-400 uppercase mb-2">Table of Contents</h3>
+        <div id="toc" class="space-y-1">
+    <div class="toc-item toc-h1" data-target="heading-0">
+      Security Documentation
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-1">
+      🔒 Security Features
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-2">
+      Password Security
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-5">
+      Token Security
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-9">
+      Account Protection
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-12">
+      Database Security
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-15">
+      Input Validation
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-18">
+      Session Management
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-21">
+      🛡️ Security Best Practices
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-22">
+      Production Checklist
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-23">
+      Environment Variables
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-24">
+      HTTPS Configuration
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-25">
+      CORS Configuration
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-26">
+      Cookie Configuration
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-27">
+      🚨 Security Incident Response
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-28">
+      If Secrets Are Compromised
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-29">
+      Login Attempt Monitoring
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-30">
+      🔐 Advanced Security Features
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-31">
+      IP-Based Restrictions (Custom Implementation)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-32">
+      Geolocation Tracking (Custom Implementation)
+    </div>
+    <div class="toc-item toc-h3" data-target="heading-33">
+      Device Fingerprinting (Custom Implementation)
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-34">
+      📊 Security Audit Logging
+    </div>
+    <div class="toc-item toc-h2" data-target="heading-35">
+      🔍 Vulnerability Disclosure
+    </div></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="content-wrapper" class="content-wrapper pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Markdown Content (Server-rendered for SEO) -->
+        <div id="content" class="markdown-body"><h1 id="heading-0">Security Documentation</h1><h2 id="heading-1">🔒 Security Features</h2><h3 id="heading-2">Password Security</h3><h4 id="heading-3">Bcrypt Hashing</h4><ul>
+<li>All passwords are hashed using bcrypt with configurable salt rounds (default: 10)</li>
+<li>Passwords are never stored in plain text</li>
+<li>Hashing is one-way and cannot be reversed</li>
+</ul>
+<pre><code class="language-javascript">// Configure bcrypt rounds
+const auth = new SecureNodeAuth({
+  security: {
+    bcryptRounds: 12 // Higher = more secure, slower
+  }
+});
+</code></pre>
+<h4 id="heading-4">Password Requirements</h4><ul>
+<li>Minimum length: 8 characters (configurable)</li>
+<li>Requires uppercase letters (configurable)</li>
+<li>Requires numbers (configurable)</li>
+<li>Requires special characters (configurable)</li>
+<li>Checks against common weak passwords</li>
+</ul>
+<pre><code class="language-javascript">const auth = new SecureNodeAuth({
+  security: {
+    passwordMinLength: 10,
+    passwordRequireUppercase: true,
+    passwordRequireNumbers: true,
+    passwordRequireSpecialChars: true
+  }
+});
+</code></pre>
+<h3 id="heading-5">Token Security</h3><h4 id="heading-6">JWT Implementation</h4><ul>
+<li><strong>Access Tokens</strong>: Short-lived (15 minutes default)</li>
+<li><strong>Refresh Tokens</strong>: Long-lived (7 days default)</li>
+<li>Separate secrets for access and refresh tokens</li>
+<li>Tokens include user ID and email only (minimal payload)</li>
+</ul>
+<h4 id="heading-7">Token Best Practices</h4><pre><code class="language-javascript">// Production configuration
+const auth = new SecureNodeAuth({
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET, // Use env variables
+    refreshSecret: process.env.JWT_REFRESH_SECRET, // Never commit secrets
+    accessExpiresIn: &#39;15m&#39;,
+    refreshExpiresIn: &#39;7d&#39;
+  }
+});
+</code></pre>
+<h4 id="heading-8">Token Storage Recommendations</h4><p><strong>Frontend (Browser):</strong></p>
+<ul>
+<li>❌ <strong>Don&#39;t</strong>: Store in localStorage (vulnerable to XSS)</li>
+<li>✅ <strong>Do</strong>: Use httpOnly cookies</li>
+<li>✅ <strong>Do</strong>: Use secure cookies in production</li>
+<li>✅ <strong>Do</strong>: Set SameSite attribute</li>
+</ul>
+<p><strong>Mobile Apps:</strong></p>
+<ul>
+<li>✅ Use secure storage (Keychain/Keystore)</li>
+<li>✅ Encrypt tokens before storage</li>
+</ul>
+<h3 id="heading-9">Account Protection</h3><h4 id="heading-10">Brute Force Prevention</h4><pre><code class="language-javascript">const auth = new SecureNodeAuth({
+  security: {
+    maxLoginAttempts: 5,
+    lockoutTime: 15 * 60 * 1000 // 15 minutes
+  }
+});
+</code></pre>
+<p>Features:</p>
+<ul>
+<li>Tracks failed login attempts per email</li>
+<li>Locks account after N failed attempts</li>
+<li>Automatic unlock after timeout</li>
+<li>Resets counter on successful login</li>
+</ul>
+<h4 id="heading-11">Rate Limiting</h4><ul>
+<li>Built-in rate limiting on all auth endpoints</li>
+<li>Default: 10 requests per 15 minutes</li>
+<li>Configurable per route</li>
+</ul>
+<pre><code class="language-javascript">app.use(&#39;/auth&#39;, auth.router({
+  enableRateLimit: true
+}));
+</code></pre>
+<h3 id="heading-12">Database Security</h3><h4 id="heading-13">SQL Injection Protection</h4><ul>
+<li>All queries use parameterized statements</li>
+<li>No string concatenation in queries</li>
+<li>mysql2 prepared statements</li>
+</ul>
+<pre><code class="language-javascript">// Example: How we prevent SQL injection
+const [rows] = await this.pool.execute(
+  &#39;SELECT * FROM users WHERE email = ?&#39;,
+  [email] // Parameters are properly escaped
+);
+</code></pre>
+<h4 id="heading-14">Connection Security</h4><ul>
+<li>Connection pooling prevents connection exhaustion</li>
+<li>Automatic connection cleanup</li>
+<li>Configurable connection limits</li>
+</ul>
+<h3 id="heading-15">Input Validation</h3><h4 id="heading-16">Email Validation</h4><ul>
+<li>RFC-compliant email validation</li>
+<li>Normalized email addresses (lowercase)</li>
+<li>XSS protection via escaping</li>
+</ul>
+<h4 id="heading-17">Data Sanitization</h4><pre><code class="language-javascript">// All user inputs are sanitized
+const sanitized = validator.escape(userInput.trim());
+</code></pre>
+<h3 id="heading-18">Session Management</h3><h4 id="heading-19">Token Revocation</h4><pre><code class="language-javascript">// Logout single session
+await auth.logout(refreshToken);
+
+// Logout all devices
+await auth.logoutAll(userId);
+</code></pre>
+<h4 id="heading-20">Token Cleanup</h4><pre><code class="language-javascript">// Periodically clean expired tokens
+const cron = require(&#39;node-cron&#39;);
+cron.schedule(&#39;0 0 * * *&#39;, async () =&gt; {
+  await auth.db.cleanupExpiredTokens(auth.options.tables.refreshTokens);
+});
+</code></pre>
+<h2 id="heading-21">🛡️ Security Best Practices</h2><h3 id="heading-22">Production Checklist</h3><ul>
+<li><input disabled="" type="checkbox"> Use strong, unique JWT secrets (32+ characters)</li>
+<li><input disabled="" type="checkbox"> Store secrets in environment variables</li>
+<li><input disabled="" type="checkbox"> Enable HTTPS only</li>
+<li><input disabled="" type="checkbox"> Implement CORS properly</li>
+<li><input disabled="" type="checkbox"> Use httpOnly cookies for tokens</li>
+<li><input disabled="" type="checkbox"> Enable rate limiting</li>
+<li><input disabled="" type="checkbox"> Set up logging and monitoring</li>
+<li><input disabled="" type="checkbox"> Implement 2FA (future feature)</li>
+<li><input disabled="" type="checkbox"> Regular security audits</li>
+<li><input disabled="" type="checkbox"> Keep dependencies updated</li>
+</ul>
+<h3 id="heading-23">Environment Variables</h3><pre><code class="language-env"># Strong secrets (use random generators)
+JWT_ACCESS_SECRET=your_64_character_random_string_here_for_access_tokens
+JWT_REFRESH_SECRET=your_64_character_random_string_here_for_refresh_tokens
+
+# Database credentials
+DB_HOST=your_db_host
+DB_USER=app_user  # Use dedicated user, not root
+DB_PASSWORD=strong_password_here
+DB_NAME=your_database
+
+# Security settings
+BCRYPT_ROUNDS=12  # Higher in production
+MAX_LOGIN_ATTEMPTS=3
+LOCKOUT_TIME=1800000  # 30 minutes
+</code></pre>
+<h3 id="heading-24">HTTPS Configuration</h3><pre><code class="language-javascript">const https = require(&#39;https&#39;);
+const fs = require(&#39;fs&#39;);
+
+const options = {
+  key: fs.readFileSync(&#39;path/to/private-key.pem&#39;),
+  cert: fs.readFileSync(&#39;path/to/certificate.pem&#39;)
+};
+
+https.createServer(options, app).listen(443);
+</code></pre>
+<h3 id="heading-25">CORS Configuration</h3><pre><code class="language-javascript">const cors = require(&#39;cors&#39;);
+
+app.use(cors({
+  origin: &#39;https://yourdomain.com&#39;,
+  credentials: true,
+  methods: [&#39;GET&#39;, &#39;POST&#39;, &#39;PATCH&#39;],
+  allowedHeaders: [&#39;Content-Type&#39;, &#39;Authorization&#39;]
+}));
+</code></pre>
+<h3 id="heading-26">Cookie Configuration</h3><pre><code class="language-javascript">// Set access token as httpOnly cookie
+res.cookie(&#39;accessToken&#39;, token, {
+  httpOnly: true,
+  secure: true, // HTTPS only
+  sameSite: &#39;strict&#39;,
+  maxAge: 15 * 60 * 1000 // 15 minutes
+});
+</code></pre>
+<h2 id="heading-27">🚨 Security Incident Response</h2><h3 id="heading-28">If Secrets Are Compromised</h3><ol>
+<li><strong>Immediate Actions:</strong><ul>
+<li>Rotate JWT secrets immediately</li>
+<li>Revoke all existing tokens</li>
+<li>Force all users to re-authenticate</li>
+</ul>
+</li>
+</ol>
+<pre><code class="language-javascript">// Rotate secrets
+await auth.logoutAll(userId); // For all users
+
+// Update environment variables with new secrets
+// Restart application
+</code></pre>
+<ol start="2">
+<li><strong>Investigation:</strong><ul>
+<li>Check access logs</li>
+<li>Identify compromised accounts</li>
+<li>Notify affected users</li>
+</ul>
+</li>
+</ol>
+<h3 id="heading-29">Login Attempt Monitoring</h3><pre><code class="language-javascript">auth.on(&#39;beforeLogin&#39;, async ({ email }) =&gt; {
+  // Log all login attempts
+  logger.info(&#39;Login attempt&#39;, { email, timestamp: Date.now() });
+});
+
+auth.on(&#39;afterLogin&#39;, async (result) =&gt; {
+  // Log successful logins
+  logger.info(&#39;Successful login&#39;, { 
+    email: result.user.email,
+    userId: result.user.id
+  });
+});
+</code></pre>
+<h2 id="heading-30">🔐 Advanced Security Features</h2><h3 id="heading-31">IP-Based Restrictions (Custom Implementation)</h3><pre><code class="language-javascript">auth.on(&#39;beforeLogin&#39;, async ({ email, req }) =&gt; {
+  const ip = req.ip;
+  
+  // Check if IP is blacklisted
+  if (await isBlacklisted(ip)) {
+    throw new Error(&#39;Access denied from this IP&#39;);
+  }
+  
+  // Track login attempts by IP
+  await trackIPAttempt(ip, email);
+});
+</code></pre>
+<h3 id="heading-32">Geolocation Tracking (Custom Implementation)</h3><pre><code class="language-javascript">auth.on(&#39;afterLogin&#39;, async (result) =&gt; {
+  const location = await getLocationFromIP(req.ip);
+  
+  // Detect suspicious logins
+  if (location.country !== result.user.lastLoginCountry) {
+    await sendSecurityAlert(result.user.email, location);
+  }
+});
+</code></pre>
+<h3 id="heading-33">Device Fingerprinting (Custom Implementation)</h3><pre><code class="language-javascript">auth.on(&#39;afterLogin&#39;, async (result) =&gt; {
+  const fingerprint = generateFingerprint(req);
+  
+  // Recognize trusted devices
+  const isTrustedDevice = await checkDeviceTrust(
+    result.user.id, 
+    fingerprint
+  );
+  
+  if (!isTrustedDevice) {
+    await sendNewDeviceAlert(result.user.email);
+  }
+});
+</code></pre>
+<h2 id="heading-34">📊 Security Audit Logging</h2><pre><code class="language-javascript">// Comprehensive audit logging
+const auditLogger = {
+  register: (user) =&gt; log(&#39;REGISTER&#39;, user),
+  login: (user) =&gt; log(&#39;LOGIN&#39;, user),
+  logout: (user) =&gt; log(&#39;LOGOUT&#39;, user),
+  passwordChange: (user) =&gt; log(&#39;PASSWORD_CHANGE&#39;, user),
+  failedLogin: (email) =&gt; log(&#39;FAILED_LOGIN&#39;, { email })
+};
+
+auth.on(&#39;afterRegister&#39;, (result) =&gt; auditLogger.register(result.user));
+auth.on(&#39;afterLogin&#39;, (result) =&gt; auditLogger.login(result.user));
+auth.on(&#39;beforeLogin&#39;, ({ email }) =&gt; {
+  // Log failed attempts in catch block
+});
+</code></pre>
+<h2 id="heading-35">🔍 Vulnerability Disclosure</h2><p>If you discover a security vulnerability, please email:<br><a href="mailto:security@yourdomain.com">security@yourdomain.com</a></p>
+<p><strong>Do not</strong> open a public issue for security vulnerabilities.</p>
+<hr>
+<p><strong>Remember: Security is a continuous process, not a one-time setup!</strong></p>
+</div>
+
+        <!-- Navigation Buttons -->
+        <div id="doc-navigation" class="mt-12 pt-8 border-t-2 border-gray-800"><div class="flex flex-col sm:flex-row justify-between gap-4">
+      <a href="QUICK_START.html" class="nav-button-outline">
+        <i class="fas fa-arrow-left"></i>
+        <span>Quick Start</span>
+      </a>
+      <a href="EMAIL_VERIFICATION_GUIDE.html" class="nav-button">
+        <span>Email Verification</span>
+        <i class="fas fa-arrow-right"></i>
+      </a></div></div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/static-docs.js"></script>
+  </body>
+</html>
