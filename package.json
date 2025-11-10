@@ -1,6 +1,6 @@
 {
   "name": "secure-node-auth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Blazing fast, zero-config MySQL authentication system with JWT. Set up secure auth in seconds with auto-schema setup and extensible custom fields.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -21,6 +21,7 @@
     "auth",
     "security",
     "express",
+    "fastify",
     "mysql2",
     "login",
     "register",
@@ -62,7 +63,7 @@
     "jsonwebtoken": "^9.0.2",
     "marked": "^17.0.0",
     "mysql2": "^3.11.0",
-    "nodemailer": "^6.9.7",
+    "nodemailer": "^7.0.10",
     "validator": "^13.12.0"
   },
   "devDependencies": {

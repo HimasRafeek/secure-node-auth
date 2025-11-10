@@ -13,7 +13,7 @@
 - 🚀 **Lightning Fast** - Built on mysql2 with connection pooling and optimized queries
 - 🎨 **Highly Customizable** - Add custom fields, hooks, and configurations
 - 🔄 **Auto Schema Setup** - Automatically creates tables, indexes, and relationships
-- 🎯 **Express Ready** - Pre-built routes and middleware
+- 🎯 **Express & Fastify Support** - Pre-built routes and middleware for both frameworks
 - 📦 **Refresh Tokens** - Secure token rotation with blacklisting
 - 🛡️ **Attack Protection** - Rate limiting, SQL injection protection, brute force prevention
 - 🔌 **Extensible** - Plugin system with before/after hooks
@@ -30,7 +30,7 @@ npm install secure-node-auth
 - `jsonwebtoken` - JWT token generation
 - `bcrypt` - Password hashing
 - `validator` - Input validation
-- `express` - Web framework (peer dependency)
+- `express` or `fastify` - Web framework (peer dependencies)
 
 ## 🚀 Quick Start
 
@@ -97,6 +97,51 @@ app.get('/api/profile', auth.middleware(), async (req, res) => {
 
 app.listen(3000, () => console.log('Server running on port 3000'));
 ```
+
+### Complete Fastify Server
+
+```javascript
+const fastify = require('fastify')({ logger: true });
+const SecureNodeAuth = require('secure-node-auth');
+const secureNodeAuthPlugin = require('secure-node-auth/src/middleware/FastifyPlugin');
+
+async function start() {
+  // Initialize auth system
+  const auth = new SecureNodeAuth({
+    connection: {
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME
+    }
+  });
+
+  await auth.init();
+
+  // Register auth plugin (includes all routes + middleware)
+  await fastify.register(secureNodeAuthPlugin, {
+    authInstance: auth,
+    routeOptions: {
+      prefix: '/auth'
+    }
+  });
+
+  // Protected route example
+  fastify.get('/api/profile', {
+    preHandler: fastify.authenticate
+  }, async (request, reply) => {
+    const user = await auth.getUserById(request.user.userId);
+    return { user };
+  });
+
+  await fastify.listen({ port: 3000 });
+  console.log('🚀 Server running on http://localhost:3000');
+}
+
+start();
+```
+
+**📘 [Complete Fastify Guide](docs/FASTIFY_GUIDE.md)** - Detailed Fastify integration, rate limiting, validation, and performance tips.
 
 ### Adding Custom Fields
 
@@ -487,6 +532,7 @@ console.log('Active users:', rows[0].total);
 
 ## 📚 Additional Guides
 
+- ⚡ [Fastify Integration Guide](docs/FASTIFY_GUIDE.md) - Complete guide for using with Fastify framework
 - 📖 [Accessing User-Specific Data](docs/USER_DATA_ACCESS.md) - Complete guide on protecting routes and accessing user's posts, orders, etc.
 - 🔄 [Authentication Flow Diagram](docs/FLOW_DIAGRAM.md) - Visual guide showing how authentication works
 - ⚡ [Quick Reference](docs/QUICK_REFERENCE_USER_DATA.md) - Common patterns cheat sheet

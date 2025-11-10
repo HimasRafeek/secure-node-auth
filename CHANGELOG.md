@@ -1,0 +1,72 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.1] - 2025-11-10
+
+### Added
+
+- ⚡ Fastify integration guide in README
+- 🎯 Complete Fastify plugin and routes support
+- 📚 Comprehensive Fastify documentation
+
+### Changed
+
+- 📖 Updated README to highlight Fastify support
+- 🔖 Added "fastify" keyword to package.json
+
+### Fixed
+
+- 🔒 Updated nodemailer dependency to v7.0.10 to fix security vulnerability
+
+## [1.0.0] - 2025-11-10
+
+### 🎉 Initial Release
+
+Production-ready MySQL authentication system with zero configuration.
+
+### Added
+
+- ⚡ Zero-config setup with automatic schema creation
+- 🔒 Complete authentication system (register, login, logout)
+- 🎯 JWT token management (access + refresh tokens)
+- 🔐 Bcrypt password hashing with configurable rounds
+- 🛡️ Security features:
+  - Rate limiting and brute force protection
+  - Account lockout after failed attempts
+  - SQL injection protection (parameterized queries)
+  - Token revocation and blacklisting
+- 📦 Express middleware and pre-built routes
+- ⚙️ Fastify support with native plugin
+- 🎨 Custom fields support for user data
+- 🔌 Extensible hooks system (before/after events)
+- 📧 Email verification system (optional)
+- 🔑 2FA support with TOTP (optional)
+- 📝 Profile management (get, update, delete)
+- 🔄 Token refresh mechanism
+- 💾 Connection pooling for performance
+- 📚 TypeScript definitions included
+- 📖 Comprehensive documentation and examples
+
+### Security
+
+- Password strength validation
+- Input sanitization and validation
+- Secure token generation
+- Session management
+- Login attempt tracking
+- CORS support
+
+### Developer Experience
+
+- Simple 3-line setup
+- Extensive configuration options
+- Clear error messages
+- Working examples included
+- Full API documentation
+- Migration support
+
+[1.0.0]: https://github.com/HimasRafeek/secure-node-auth/releases/tag/v1.0.0
