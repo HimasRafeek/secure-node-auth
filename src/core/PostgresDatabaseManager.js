@@ -24,7 +24,22 @@ class PostgresDatabaseManager {
         throw new Error('Database host, user, and database name are required');
       }
 
-      this.pool = new Pool(this.config);
+      // Map MySQL-style config to PostgreSQL Pool options
+      const pgConfig = {
+        host: this.config.host,
+        port: this.config.port || 5432,
+        user: this.config.user,
+        password: this.config.password,
+        database: this.config.database,
+        // Map connectionLimit to max for pg
+        max: this.config.connectionLimit || this.config.max || 10,
+        // PostgreSQL-specific options
+        idleTimeoutMillis: this.config.idleTimeoutMillis || 30000,
+        connectionTimeoutMillis: this.config.connectionTimeoutMillis || 2000,
+        ssl: this.config.ssl || false,
+      };
+
+      this.pool = new Pool(pgConfig);
 
       // Test connection
       const client = await this.pool.connect();
@@ -164,17 +179,24 @@ class PostgresDatabaseManager {
       await client.query(loginAttemptsTableSQL);
       await client.query(verificationTokensTableSQL);
 
-      // Create trigger function
+      // Create trigger function (CREATE OR REPLACE makes it idempotent)
       await client.query(triggerFunctionSQL);
 
-      // Create trigger for users table
-      await client.query(`
-        DROP TRIGGER IF EXISTS update_users_updated_at ON "${tables.users}";
-        CREATE TRIGGER update_users_updated_at
-        BEFORE UPDATE ON "${tables.users}"
-        FOR EACH ROW
-        EXECUTE FUNCTION update_updated_at_column();
-      `);
+      // Create trigger for users table (drop first to make it idempotent)
+      try {
+        await client.query(`DROP TRIGGER IF EXISTS update_users_updated_at ON "${tables.users}";`);
+        await client.query(`
+          CREATE TRIGGER update_users_updated_at
+          BEFORE UPDATE ON "${tables.users}"
+          FOR EACH ROW
+          EXECUTE FUNCTION update_updated_at_column();
+        `);
+      } catch (error) {
+        // Trigger might not exist on first run, that's okay
+        if (!error.message.includes('does not exist')) {
+          console.warn(`Trigger creation warning: ${error.message}`);
+        }
+      }
     } finally {
       client.release();
     }
@@ -193,26 +215,30 @@ class PostgresDatabaseManager {
       return 'VARCHAR(50)';
     }
 
-    // INT variations
-    if (typeUpper.includes('INT')) return 'INTEGER';
+    // INT variations (order matters - check BIGINT before INT, TINYINT before INT)
+    if (typeUpper.includes('TINYINT(1)')) return 'BOOLEAN';
     if (typeUpper.includes('BIGINT')) return 'BIGINT';
-    if (typeUpper.includes('TINYINT(1)') || typeUpper === 'BOOLEAN') return 'BOOLEAN';
+    if (typeUpper.includes('INT')) return 'INTEGER';
+    if (typeUpper === 'BOOLEAN') return 'BOOLEAN';
 
     // String types
     if (typeUpper.includes('VARCHAR')) return mysqlType.replace(/varchar/i, 'VARCHAR');
     if (typeUpper.includes('TEXT')) return 'TEXT';
+    if (typeUpper.includes('CHAR')) return mysqlType.replace(/char/i, 'CHAR');
 
-    // Numeric types
-    if (typeUpper.includes('FLOAT')) return 'REAL';
+    // Numeric types (order matters - check DOUBLE before FLOAT)
     if (typeUpper.includes('DOUBLE')) return 'DOUBLE PRECISION';
+    if (typeUpper.includes('FLOAT')) return 'REAL';
     if (typeUpper.includes('DECIMAL')) return mysqlType.replace(/decimal/i, 'DECIMAL');
+    if (typeUpper.includes('NUMERIC')) return mysqlType.replace(/numeric/i, 'NUMERIC');
 
-    // Date/Time types
-    if (typeUpper.includes('DATETIME') || typeUpper.includes('TIMESTAMP')) return 'TIMESTAMP';
+    // Date/Time types (order matters - check DATETIME before DATE)
+    if (typeUpper.includes('DATETIME')) return 'TIMESTAMP';
+    if (typeUpper.includes('TIMESTAMP')) return 'TIMESTAMP';
     if (typeUpper.includes('DATE')) return 'DATE';
     if (typeUpper.includes('TIME')) return 'TIME';
 
-    // Default
+    // Default - return as-is
     return mysqlType;
   }
 

@@ -1,10 +1,14 @@
 # Development and testing files
 qa-test.js
+test-postgres.js
 docs-server.js
 generate-docs.js
 .env.example
 PREPUBLISH_CHECKLIST.md
 CLEANUP_SUMMARY.md
+POSTGRES_INTEGRATION_SUMMARY.md
+POSTGRES_CODE_REVIEW.md
+FILES_TO_REMOVE.md
 
 # Audit reports
 AUDIT-REPORT.md
@@ -43,10 +47,11 @@ yarn-debug.log*
 .DS_Store
 Thumbs.db
 
-# Git
+# Git and npm config files
 .git/
 .gitignore
 .gitattributes
+.npmignore
 
 # CI/CD
 .github/
@@ -57,3 +62,4 @@ Thumbs.db
 node_modules/
 .env
 .env.*
+package-lock.json
