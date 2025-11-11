@@ -630,6 +630,23 @@ class SecureNodeAuth {
   }
 
   /**
+   * Get user by email
+   */
+  async getUserByEmail(email) {
+    this._ensureInitialized();
+
+    if (!email || typeof email !== 'string') {
+      throw new Error('Valid email is required');
+    }
+
+    const user = await this.db.findUserByEmail(email, this.options.tables.users);
+    if (user) {
+      delete user.password;
+    }
+    return user;
+  }
+
+  /**
    * Update user
    */
   async updateUser(userId, updates) {
@@ -665,6 +682,13 @@ class SecureNodeAuth {
 
     await this.db.updateUser(userId, updates, this.options.tables.users);
     return await this.getUserById(userId);
+  }
+
+  /**
+   * Update user profile (alias for updateUser)
+   */
+  async updateProfile(userId, updates) {
+    return await this.updateUser(userId, updates);
   }
 
   /**
@@ -721,6 +745,89 @@ class SecureNodeAuth {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Check if account is locked due to failed login attempts
+   */
+  async isAccountLocked(email) {
+    this._ensureInitialized();
+
+    if (!email || typeof email !== 'string') {
+      throw new Error('Valid email is required');
+    }
+
+    // Normalize email
+    email = email.trim().toLowerCase();
+
+    return await this.db.isAccountLocked(
+      email,
+      this.options.tables.loginAttempts,
+      this.options.security.maxLoginAttempts,
+      this.options.security.lockoutTime
+    );
+  }
+
+  /**
+   * Get total user count (for analytics/dashboards)
+   */
+  async getUserCount() {
+    this._ensureInitialized();
+    return await this.db.getUserCount(this.options.tables.users);
+  }
+
+  /**
+   * Get raw database connection pool for advanced queries
+   * Use with caution - direct pool access bypasses security checks
+   */
+  getPool() {
+    this._ensureInitialized();
+    return this.db.getPool();
+  }
+
+  /**
+   * Clean up expired verification tokens
+   * Removes tokens that have expired to prevent table bloat
+   */
+  async cleanupExpiredTokens() {
+    this._ensureInitialized();
+
+    if (!this.options.tables.verificationTokens) {
+      throw new Error('Verification tokens table not configured');
+    }
+
+    return await this.db.cleanupExpiredTokens(this.options.tables.verificationTokens);
+  }
+
+  /**
+   * Clean up expired login attempts
+   * Removes old login attempt records to prevent table bloat
+   * @param {number} daysToKeep - Number of days to retain records (default: 30)
+   */
+  async cleanupExpiredLoginAttempts(daysToKeep = 30) {
+    this._ensureInitialized();
+    return await this.db.cleanupExpiredLoginAttempts(this.options.tables.loginAttempts, daysToKeep);
+  }
+
+  /**
+   * Clean up revoked refresh tokens
+   * Removes revoked tokens that have expired
+   * @param {number} daysToKeep - Number of days to retain revoked records (default: 7)
+   */
+  async cleanupRevokedRefreshTokens(daysToKeep = 7) {
+    this._ensureInitialized();
+    return await this.db.cleanupRevokedRefreshTokens(this.options.tables.refreshTokens, daysToKeep);
+  }
+
+  /**
+   * Perform comprehensive database maintenance
+   * Runs all cleanup operations in one call
+   * Recommended: Schedule this daily during low-traffic periods
+   * @param {Object} options - Cleanup options
+   */
+  async performMaintenance(options = {}) {
+    this._ensureInitialized();
+    return await this.db.performMaintenance(this.options.tables, options);
   }
 
   /**

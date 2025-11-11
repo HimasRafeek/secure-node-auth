@@ -161,14 +161,80 @@ declare module 'secure-node-auth' {
     getUserById(userId: number): Promise<User | null>;
 
     /**
+     * Get user by email
+     */
+    getUserByEmail(email: string): Promise<User | null>;
+
+    /**
      * Update user
      */
     updateUser(userId: number, updates: Partial<User>): Promise<User>;
 
     /**
+     * Update user profile (alias for updateUser)
+     */
+    updateProfile(userId: number, updates: Partial<User>): Promise<User>;
+
+    /**
      * Change password
      */
-    changePassword(userId: number, oldPassword: string, newPassword: string): Promise<{ success: boolean }>;
+    changePassword(
+      userId: number,
+      oldPassword: string,
+      newPassword: string
+    ): Promise<{ success: boolean }>;
+
+    /**
+     * Check if account is locked due to failed login attempts
+     */
+    isAccountLocked(email: string): Promise<boolean>;
+
+    /**
+     * Get total user count (for analytics/dashboards)
+     */
+    getUserCount(): Promise<number>;
+
+    /**
+     * Get raw database connection pool for advanced queries
+     * Use with caution - direct pool access bypasses security checks
+     */
+    getPool(): Pool;
+
+    /**
+     * Clean up expired verification tokens
+     */
+    cleanupExpiredTokens(): Promise<number>;
+
+    /**
+     * Clean up expired login attempts
+     * @param daysToKeep - Number of days to retain records (default: 30)
+     */
+    cleanupExpiredLoginAttempts(daysToKeep?: number): Promise<number>;
+
+    /**
+     * Clean up revoked refresh tokens
+     * @param daysToKeep - Number of days to retain revoked records (default: 7)
+     */
+    cleanupRevokedRefreshTokens(daysToKeep?: number): Promise<number>;
+
+    /**
+     * Perform comprehensive database maintenance
+     * Runs all cleanup operations in one call
+     */
+    performMaintenance(options?: {
+      cleanupLoginAttempts?: boolean;
+      loginAttemptsRetentionDays?: number;
+      cleanupVerificationTokens?: boolean;
+      cleanupRevokedTokens?: boolean;
+      revokedTokensRetentionDays?: number;
+    }): Promise<{
+      loginAttemptsDeleted: number;
+      verificationTokensDeleted: number;
+      revokedTokensDeleted: number;
+      startTime: Date;
+      endTime: Date;
+      duration: number;
+    }>;
 
     /**
      * Register a hook

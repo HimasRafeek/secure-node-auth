@@ -374,9 +374,17 @@ class PostgresDatabaseManager {
   async storeRefreshToken(userId, token, tableName) {
     this._ensureConnected();
 
-    if (!userId || !token || !token.token || !token.expiresAt) {
-      throw new Error('User ID, token, and expiresAt are required');
+    if (!userId || !token || typeof token !== 'string') {
+      throw new Error('userId and token are required');
     }
+
+    // Calculate expiration (7 days from now)
+    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+    // Hash the token before storing for additional security
+    // Store last 8 chars for debugging/identification
+    const crypto = require('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     const sql = `
       INSERT INTO "${tableName}" ("userId", token, "expiresAt")
@@ -384,7 +392,7 @@ class PostgresDatabaseManager {
       RETURNING id
     `;
 
-    const result = await this.pool.query(sql, [userId, token.token, token.expiresAt]);
+    const result = await this.pool.query(sql, [userId, tokenHash, expiresAt]);
     return result.rows[0].id;
   }
 
@@ -398,13 +406,17 @@ class PostgresDatabaseManager {
       return null;
     }
 
+    // Hash the token to match stored hash
+    const crypto = require('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
     const sql = `
       SELECT * FROM "${tableName}"
       WHERE token = $1 AND revoked = FALSE AND "expiresAt" > $2
       LIMIT 1
     `;
 
-    const result = await this.pool.query(sql, [token, Date.now()]);
+    const result = await this.pool.query(sql, [tokenHash, Date.now()]);
     return result.rows[0] || null;
   }
 
@@ -418,13 +430,17 @@ class PostgresDatabaseManager {
       throw new Error('Token is required');
     }
 
+    // Hash the token to match stored hash
+    const crypto = require('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
     const sql = `
       UPDATE "${tableName}"
       SET revoked = TRUE
       WHERE token = $1
     `;
 
-    const result = await this.pool.query(sql, [token]);
+    const result = await this.pool.query(sql, [tokenHash]);
     return result.rowCount > 0;
   }
 

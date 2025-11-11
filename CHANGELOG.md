@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- **PostgreSQL Refresh Token Storage** - Fixed token storage to match MySQL implementation
+  - Now accepts plain string tokens (was expecting token object)
+  - Added SHA256 hashing for secure token storage
+  - Auto-generates 7-day expiration (was requiring manual calculation)
+  - Fixed `findRefreshToken()` and `revokeRefreshToken()` to hash tokens before lookup
+
+### ✨ New Features
+
+- **Added Missing API Methods** - Exposed 6 utility methods for production use
+  - `getUserByEmail(email)` - Get user by email address
+  - `updateProfile(userId, updates)` - Alias for updateUser with clearer naming
+  - `isAccountLocked(email)` - Check if account is locked due to failed login attempts
+  - `getUserCount()` - Get total user count for analytics/dashboards
+  - `getPool()` - Get raw database pool for advanced queries
+  - `cleanupExpiredTokens()` - Clean up expired verification tokens
+  - `cleanupExpiredLoginAttempts(days)` - Clean up old login attempt records
+  - `cleanupRevokedRefreshTokens(days)` - Clean up revoked refresh tokens
+  - `performMaintenance(options)` - Run all cleanup operations in one call
+
+### 📚 Documentation
+
+- Added TypeScript definitions for all new methods
+- Updated API documentation with maintenance utilities
+- Added examples for database cleanup and maintenance
+
+### 🔧 Improvements
+
+- Better API consistency between MySQL and PostgreSQL implementations
+- Complete feature parity for refresh token management
+- Enhanced database maintenance capabilities for production deployments
+
 ## [1.2.0] - 2025-11-11
 
 ### 🔒 Security Hardening
