@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-11-11
+
+### 🐛 Bug Fixes
+
+- Fixed PostgreSQL trigger creation to be idempotent (prevents errors when calling `init()` multiple times)
+- Fixed type conversion order in PostgreSQL adapter (BIGINT/DOUBLE were incorrectly matched)
+- Added proper connection pool config mapping for PostgreSQL (connectionLimit → max)
+- Improved error handling for trigger creation
+
+### 📚 Documentation
+
+- Added comprehensive PostgreSQL test suite (`test-postgres.js`)
+- Added detailed code review document
+- Updated .npmignore to properly exclude development files
+
 ## [1.1.0] - 2025-11-10
 
 ### 🎉 Major Feature: PostgreSQL Support
