@@ -46,6 +46,36 @@ lerna-debug.log*
 *.temp
 .cache/
 
+# Internal documentation and review files
+POSTGRES_CODE_REVIEW.md
+
+# Security documentation (generated, not needed in repo)
+SECURITY_CODE_ANALYSIS_REPORT.md
+SECURITY_HEADERS.md
+PRODUCTION_SECURITY_CHECKLIST.md
+SECURITY_FIXES_SUMMARY.md
+SECURITY_FIXES_VERIFICATION.md
+SECURITY_IMPLEMENTATION_COMPLETE.md
+QUICK_START_SECURITY.md
+FINAL_STATUS_REPORT.md
+SECURITY_DOCUMENTATION_INDEX.md
+
+# Analysis and recommendations (internal reference only)
+DATABASE_CREATION_VERIFICATION.md
+README_UPDATE_RECOMMENDATIONS.md
+ANALYSIS_SUMMARY.md
+FINAL_ANALYSIS_REPORT.md
+QUICK_REFERENCE.md
+EXECUTIVE_BRIEFING.md
+POSTGRES_INTEGRATION_SUMMARY.md
+CLEANUP_SUMMARY.md
+PREPUBLISH_CHECKLIST.md
+FILES_TO_REMOVE.md
+
+# Internal test files
+test-postgres.js
+qa-test.js
+
 # Optional audit folder (keep in repo but don't publish to npm)
 # audit/
 

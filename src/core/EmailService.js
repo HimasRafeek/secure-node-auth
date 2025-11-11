@@ -10,7 +10,7 @@ class EmailService {
     this.dbPool = dbPool;
     this.tables = tables;
     this.transporter = null;
-    
+
     // Initialize transporter if config is provided
     if (config && config.smtp) {
       this.initTransporter();
@@ -18,35 +18,76 @@ class EmailService {
   }
 
   /**
-   * Initialize nodemailer transporter
+   * Initialize nodemailer transporter with secure TLS configuration
+   * SECURITY: Enforces certificate verification in production
    */
   initTransporter() {
     const { smtp } = this.config;
-    
+
     if (!smtp || !smtp.host || !smtp.port) {
       console.warn('[EmailService] SMTP configuration incomplete. Email features disabled.');
       return;
     }
 
     try {
+      // Determine TLS configuration based on environment
+      const tlsConfig = this._getTLSConfig(smtp);
+
       this.transporter = nodemailer.createTransport({
         host: smtp.host,
         port: smtp.port,
         secure: smtp.secure || false, // true for 465, false for other ports
-        auth: smtp.auth ? {
-          user: smtp.auth.user,
-          pass: smtp.auth.pass
-        } : undefined,
-        tls: smtp.tls || {
-          rejectUnauthorized: false // Allow self-signed certificates in dev
-        }
+        auth: smtp.auth
+          ? {
+              user: smtp.auth.user,
+              pass: smtp.auth.pass,
+            }
+          : undefined,
+        tls: tlsConfig,
       });
-      
-      console.log('[EmailService] ✓ Email transporter initialized');
+
+      console.log('[EmailService] ✓ Email transporter initialized with secure TLS configuration');
     } catch (error) {
       console.error('[EmailService] Failed to initialize transporter:', error.message);
       this.transporter = null;
     }
+  }
+
+  /**
+   * Determine TLS configuration based on environment and settings
+   * SECURITY: Enforces certificate verification in production
+   * @private
+   */
+  _getTLSConfig(smtpConfig) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Use custom TLS config if provided
+    if (smtpConfig.tls && typeof smtpConfig.tls === 'object') {
+      return smtpConfig.tls;
+    }
+
+    // SECURITY: Production environment requires strict certificate verification
+    if (isProduction) {
+      const productionTLSConfig = {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2', // Enforce TLS 1.2 or higher
+      };
+      console.log(
+        '[EmailService] ✓ Production TLS mode: Certificate verification enabled (rejectUnauthorized: true)'
+      );
+      return productionTLSConfig;
+    }
+
+    // Development environment: Allow self-signed certificates with warning
+    console.warn(
+      '[EmailService] ⚠️  Development TLS mode: Certificate verification disabled. ' +
+        'This is unsafe for production. Set NODE_ENV=production to enforce certificate verification.'
+    );
+
+    return {
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1.2',
+    };
   }
 
   /**
@@ -83,7 +124,7 @@ class EmailService {
     try {
       // Generate verification token
       const token = this.generateToken();
-      const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
       // Store token in database
       await this.dbPool.execute(
@@ -101,18 +142,18 @@ class EmailService {
         subject: this.config.emailTemplates?.verification?.subject || 'Verify Your Email Address',
         html: this.config.emailTemplates?.verification?.html
           ? this.config.emailTemplates.verification.html(verificationLink, email)
-          : this._defaultVerificationTemplate(verificationLink, email)
+          : this._defaultVerificationTemplate(verificationLink, email),
       };
 
       // Send email
       const info = await this.transporter.sendMail(mailOptions);
-      
+
       console.log('[EmailService] Verification email sent:', info.messageId);
-      
+
       return {
         success: true,
         messageId: info.messageId,
-        token // Return token for testing purposes
+        token, // Return token for testing purposes
       };
     } catch (error) {
       console.error('[EmailService] Failed to send verification email:', error.message);
@@ -125,7 +166,7 @@ class EmailService {
    */
   async verifyEmail(token) {
     const connection = await this.dbPool.getConnection();
-    
+
     try {
       await connection.beginTransaction();
 
@@ -172,7 +213,7 @@ class EmailService {
       return {
         success: true,
         userId,
-        message: 'Email verified successfully'
+        message: 'Email verified successfully',
       };
     } catch (error) {
       await connection.rollback();
@@ -241,7 +282,7 @@ class EmailService {
 
       // Generate reset token
       const token = this.generateToken();
-      const expiresAt = Date.now() + (1 * 60 * 60 * 1000); // 1 hour
+      const expiresAt = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
 
       // Store token in users table
       await this.dbPool.execute(
@@ -261,25 +302,25 @@ class EmailService {
         subject: this.config.emailTemplates?.passwordReset?.subject || 'Reset Your Password',
         html: this.config.emailTemplates?.passwordReset?.html
           ? this.config.emailTemplates.passwordReset.html(resetLink, email)
-          : this._defaultPasswordResetTemplate(resetLink, email)
+          : this._defaultPasswordResetTemplate(resetLink, email),
       };
 
       // Send email
       const info = await this.transporter.sendMail(mailOptions);
-      
+
       console.log('[EmailService] Password reset email sent:', info.messageId);
-      
+
       return {
         success: true,
         messageId: info.messageId,
-        message: 'If the email exists, a reset link has been sent.'
+        message: 'If the email exists, a reset link has been sent.',
       };
     } catch (error) {
       console.error('[EmailService] Failed to send password reset email:', error.message);
       // Don't reveal internal errors
       return {
         success: true,
-        message: 'If the email exists, a reset link has been sent.'
+        message: 'If the email exists, a reset link has been sent.',
       };
     }
   }
@@ -290,7 +331,7 @@ class EmailService {
   async cleanupExpiredTokens() {
     try {
       const now = Date.now();
-      
+
       // Delete expired verification tokens
       const [result] = await this.dbPool.execute(
         `DELETE FROM \`${this.tables.verificationTokens}\` WHERE expiresAt < ?`,

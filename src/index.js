@@ -134,7 +134,89 @@ class SecureNodeAuth {
       console.warn('[SecureNodeAuth] Invalid lockoutTime, using default: 15 minutes');
     }
 
+    // SECURITY: Validate JWT secrets for production environment
+    this._validateJWTSecrets(merged.jwt);
+
     return merged;
+  }
+
+  /**
+   * Validate JWT secrets for security requirements
+   * Enforces strict requirements in production environment
+   * @private
+   */
+  _validateJWTSecrets(jwtConfig) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    const accessSecretIsDefault = jwtConfig.accessSecret === 'change_this_secret_in_production';
+    const refreshSecretIsDefault =
+      jwtConfig.refreshSecret === 'change_this_refresh_secret_in_production';
+
+    // CRITICAL: In production, abort if defaults are used
+    if (isProduction && (accessSecretIsDefault || refreshSecretIsDefault)) {
+      const error = new Error(
+        'CRITICAL SECURITY ERROR: Default JWT secrets detected in production environment. ' +
+          'You must set JWT_ACCESS_SECRET and JWT_REFRESH_SECRET environment variables ' +
+          'to cryptographically secure values before starting in production.'
+      );
+      error.code = 'ERR_JWT_SECRETS_NOT_CONFIGURED';
+      throw error;
+    }
+
+    // CRITICAL: Minimum length requirement
+    const MIN_SECRET_LENGTH = 32;
+    if (jwtConfig.accessSecret.length < MIN_SECRET_LENGTH) {
+      const error = new Error(
+        `CRITICAL SECURITY ERROR: JWT_ACCESS_SECRET must be at least ${MIN_SECRET_LENGTH} characters long. ` +
+          `Current length: ${jwtConfig.accessSecret.length}. ` +
+          'Use a cryptographically secure random string (e.g., openssl rand -base64 32).'
+      );
+      error.code = 'ERR_JWT_ACCESS_SECRET_TOO_SHORT';
+
+      if (isProduction) {
+        throw error;
+      } else {
+        console.error('[SecureNodeAuth] ⚠️  WARNING: ' + error.message);
+      }
+    }
+
+    if (jwtConfig.refreshSecret.length < MIN_SECRET_LENGTH) {
+      const error = new Error(
+        `CRITICAL SECURITY ERROR: JWT_REFRESH_SECRET must be at least ${MIN_SECRET_LENGTH} characters long. ` +
+          `Current length: ${jwtConfig.refreshSecret.length}. ` +
+          'Use a cryptographically secure random string (e.g., openssl rand -base64 32).'
+      );
+      error.code = 'ERR_JWT_REFRESH_SECRET_TOO_SHORT';
+
+      if (isProduction) {
+        throw error;
+      } else {
+        console.error('[SecureNodeAuth] ⚠️  WARNING: ' + error.message);
+      }
+    }
+
+    // Secrets must be different
+    if (jwtConfig.accessSecret === jwtConfig.refreshSecret) {
+      const error = new Error(
+        'CRITICAL SECURITY ERROR: JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different. ' +
+          'Using the same secret for both token types defeats the purpose of token separation.'
+      );
+      error.code = 'ERR_JWT_SECRETS_IDENTICAL';
+      throw error;
+    }
+
+    // Warn if using default values in development
+    if ((isDevelopment || !isProduction) && (accessSecretIsDefault || refreshSecretIsDefault)) {
+      console.warn(
+        '[SecureNodeAuth] ⚠️  WARNING: Using default JWT secrets. ' +
+          'These should ONLY be used for development/testing. ' +
+          'In production, set JWT_ACCESS_SECRET and JWT_REFRESH_SECRET to secure random values.'
+      );
+    }
+
+    // Log secret validation status
+    console.log('[SecureNodeAuth] ✓ JWT secrets validated securely');
   }
 
   /**

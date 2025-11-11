@@ -521,6 +521,173 @@ class PostgresDatabaseManager {
   }
 
   /**
+   * Clean up expired login attempt records
+   * MAINTENANCE: Should be called periodically (e.g., daily via cron job)
+   * Removes login records older than specified days to prevent table bloat
+   * @param {string} tableName - Login attempts table name
+   * @param {number} daysToKeep - Number of days to retain records (default: 30)
+   * @returns {Promise<number>} Number of records deleted
+   */
+  async cleanupExpiredLoginAttempts(tableName, daysToKeep = 30) {
+    this._ensureConnected();
+
+    if (typeof daysToKeep !== 'number' || daysToKeep < 1) {
+      throw new Error('daysToKeep must be a positive number');
+    }
+
+    try {
+      const cutoffDate = new Date(Date.now() - daysToKeep * 24 * 60 * 60 * 1000);
+
+      const result = await this.pool.query(`DELETE FROM "${tableName}" WHERE "attemptedAt" < $1`, [
+        cutoffDate,
+      ]);
+
+      const deletedCount = result.rowCount || 0;
+
+      console.log(
+        `[PostgresDatabaseManager] ✓ Cleaned up ${deletedCount} expired login attempts ` +
+          `(older than ${daysToKeep} days)`
+      );
+
+      return deletedCount;
+    } catch (error) {
+      throw new Error(`Failed to clean up login attempts: ${error.message}`);
+    }
+  }
+
+  /**
+   * Clean up expired verification tokens
+   * MAINTENANCE: Should be called periodically (e.g., hourly via cron job)
+   * Removes tokens that have expired to prevent table bloat
+   * @param {string} tableName - Verification tokens table name
+   * @returns {Promise<number>} Number of tokens deleted
+   */
+  async cleanupExpiredVerificationTokens(tableName) {
+    this._ensureConnected();
+
+    try {
+      const result = await this.pool.query(`DELETE FROM "${tableName}" WHERE "expiresAt" < $1`, [
+        Date.now(),
+      ]);
+
+      const deletedCount = result.rowCount || 0;
+
+      if (deletedCount > 0) {
+        console.log(
+          `[PostgresDatabaseManager] ✓ Cleaned up ${deletedCount} expired verification tokens`
+        );
+      }
+
+      return deletedCount;
+    } catch (error) {
+      throw new Error(`Failed to clean up verification tokens: ${error.message}`);
+    }
+  }
+
+  /**
+   * Clean up revoked refresh tokens
+   * MAINTENANCE: Should be called periodically (e.g., daily via cron job)
+   * Removes revoked tokens that have expired to prevent table bloat
+   * @param {string} tableName - Refresh tokens table name
+   * @param {number} daysToKeep - Number of days to retain revoked records (default: 7)
+   * @returns {Promise<number>} Number of tokens deleted
+   */
+  async cleanupRevokedRefreshTokens(tableName, daysToKeep = 7) {
+    this._ensureConnected();
+
+    if (typeof daysToKeep !== 'number' || daysToKeep < 1) {
+      throw new Error('daysToKeep must be a positive number');
+    }
+
+    try {
+      const cutoffDate = Date.now() - daysToKeep * 24 * 60 * 60 * 1000;
+
+      const result = await this.pool.query(
+        `DELETE FROM "${tableName}" 
+         WHERE "revoked" = true AND "expiresAt" < $1`,
+        [cutoffDate]
+      );
+
+      const deletedCount = result.rowCount || 0;
+
+      if (deletedCount > 0) {
+        console.log(
+          `[PostgresDatabaseManager] ✓ Cleaned up ${deletedCount} revoked refresh tokens ` +
+            `(older than ${daysToKeep} days)`
+        );
+      }
+
+      return deletedCount;
+    } catch (error) {
+      throw new Error(`Failed to clean up revoked tokens: ${error.message}`);
+    }
+  }
+
+  /**
+   * Perform comprehensive database maintenance
+   * Cleans up all expired records in one operation
+   * RECOMMENDED: Schedule this to run daily during low-traffic periods
+   * @param {Object} tables - Table configuration object with table names
+   * @param {Object} options - Cleanup options
+   * @returns {Promise<Object>} Summary of cleanup operations
+   */
+  async performMaintenance(tables, options = {}) {
+    this._ensureConnected();
+
+    const {
+      cleanupLoginAttempts = true,
+      loginAttemptsRetentionDays = 30,
+      cleanupVerificationTokens = true,
+      cleanupRevokedTokens = true,
+      revokedTokensRetentionDays = 7,
+    } = options;
+
+    console.log('[PostgresDatabaseManager] Starting database maintenance cleanup...');
+
+    const results = {
+      loginAttemptsDeleted: 0,
+      verificationTokensDeleted: 0,
+      revokedTokensDeleted: 0,
+      startTime: new Date(),
+    };
+
+    try {
+      if (cleanupLoginAttempts && tables.loginAttempts) {
+        results.loginAttemptsDeleted = await this.cleanupExpiredLoginAttempts(
+          tables.loginAttempts,
+          loginAttemptsRetentionDays
+        );
+      }
+
+      if (cleanupVerificationTokens && tables.verificationTokens) {
+        results.verificationTokensDeleted = await this.cleanupExpiredVerificationTokens(
+          tables.verificationTokens
+        );
+      }
+
+      if (cleanupRevokedTokens && tables.refreshTokens) {
+        results.revokedTokensDeleted = await this.cleanupRevokedRefreshTokens(
+          tables.refreshTokens,
+          revokedTokensRetentionDays
+        );
+      }
+
+      results.endTime = new Date();
+      results.duration = results.endTime - results.startTime;
+
+      console.log(
+        `[PostgresDatabaseManager] ✓ Maintenance complete ` +
+          `(${results.duration}ms, ${results.loginAttemptsDeleted + results.verificationTokensDeleted + results.revokedTokensDeleted} total records cleaned)`
+      );
+
+      return results;
+    } catch (error) {
+      console.error('[PostgresDatabaseManager] Maintenance failed:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Execute raw query (use with caution)
    */
   async query(sql, params = []) {
