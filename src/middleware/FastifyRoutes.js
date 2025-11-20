@@ -22,197 +22,326 @@ class FastifyRoutes {
     if (this.options.enableRateLimit) {
       await fastify.register(require('@fastify/rate-limit'), {
         max: this.options.rateLimitMax,
-        timeWindow: this.options.rateLimitWindow
+        timeWindow: this.options.rateLimitWindow,
       });
     }
 
     // Health check
-    fastify.get('/health', {
-      schema: {
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              status: { type: 'string' },
-              service: { type: 'string' },
-              timestamp: { type: 'string' }
-            }
-          }
-        }
-      }
-    }, this._healthCheck.bind(this));
+    fastify.get(
+      '/health',
+      {
+        schema: {
+          response: {
+            200: {
+              type: 'object',
+              properties: {
+                status: { type: 'string' },
+                service: { type: 'string' },
+                timestamp: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      this._healthCheck.bind(this)
+    );
 
     // Register
-    fastify.post('/register', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['email', 'password'],
-          properties: {
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string', minLength: 8 },
-            firstName: { type: 'string' },
-            lastName: { type: 'string' }
-          }
-        },
-        response: {
-          201: {
+    fastify.post(
+      '/register',
+      {
+        schema: {
+          body: {
             type: 'object',
+            required: ['email', 'password'],
             properties: {
-              success: { type: 'boolean' },
-              message: { type: 'string' },
-              data: { type: 'object' }
-            }
-          }
-        }
-      }
-    }, this._register.bind(this));
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string', minLength: 8 },
+              firstName: { type: 'string' },
+              lastName: { type: 'string' },
+            },
+          },
+          response: {
+            201: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                message: { type: 'string' },
+                data: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+      this._register.bind(this)
+    );
 
     // Login
-    fastify.post('/login', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['email', 'password'],
-          properties: {
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string' }
-          }
-        }
-      }
-    }, this._login.bind(this));
+    fastify.post(
+      '/login',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string' },
+            },
+          },
+        },
+      },
+      this._login.bind(this)
+    );
 
     // Refresh token
-    fastify.post('/refresh', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['refreshToken'],
-          properties: {
-            refreshToken: { type: 'string' }
-          }
-        }
-      }
-    }, this._refresh.bind(this));
+    fastify.post(
+      '/refresh',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['refreshToken'],
+            properties: {
+              refreshToken: { type: 'string' },
+            },
+          },
+        },
+      },
+      this._refresh.bind(this)
+    );
 
     // Logout
-    fastify.post('/logout', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['refreshToken'],
-          properties: {
-            refreshToken: { type: 'string' }
-          }
-        }
-      }
-    }, this._logout.bind(this));
+    fastify.post(
+      '/logout',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['refreshToken'],
+            properties: {
+              refreshToken: { type: 'string' },
+            },
+          },
+        },
+      },
+      this._logout.bind(this)
+    );
 
     // Logout all devices
-    fastify.post('/logout-all', {
-      preHandler: this._fastifyAuthMiddleware.bind(this)
-    }, this._logoutAll.bind(this));
+    fastify.post(
+      '/logout-all',
+      {
+        preHandler: this._fastifyAuthMiddleware.bind(this),
+      },
+      this._logoutAll.bind(this)
+    );
 
     // Get current user
-    fastify.get('/me', {
-      preHandler: this._fastifyAuthMiddleware.bind(this)
-    }, this._getCurrentUser.bind(this));
+    fastify.get(
+      '/me',
+      {
+        preHandler: this._fastifyAuthMiddleware.bind(this),
+      },
+      this._getCurrentUser.bind(this)
+    );
 
     // Update user
-    fastify.patch('/me', {
-      preHandler: this._fastifyAuthMiddleware.bind(this)
-    }, this._updateUser.bind(this));
+    fastify.patch(
+      '/me',
+      {
+        preHandler: this._fastifyAuthMiddleware.bind(this),
+      },
+      this._updateUser.bind(this)
+    );
 
     // Change password
-    fastify.post('/change-password', {
-      preHandler: this._fastifyAuthMiddleware.bind(this),
-      schema: {
-        body: {
-          type: 'object',
-          required: ['oldPassword', 'newPassword'],
-          properties: {
-            oldPassword: { type: 'string' },
-            newPassword: { type: 'string', minLength: 8 }
-          }
-        }
-      }
-    }, this._changePassword.bind(this));
+    fastify.post(
+      '/change-password',
+      {
+        preHandler: this._fastifyAuthMiddleware.bind(this),
+        schema: {
+          body: {
+            type: 'object',
+            required: ['oldPassword', 'newPassword'],
+            properties: {
+              oldPassword: { type: 'string' },
+              newPassword: { type: 'string', minLength: 8 },
+            },
+          },
+        },
+      },
+      this._changePassword.bind(this)
+    );
 
     // Verify token
-    fastify.post('/verify', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['token'],
-          properties: {
-            token: { type: 'string' }
-          }
-        }
-      }
-    }, this._verifyToken.bind(this));
+    fastify.post(
+      '/verify',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['token'],
+            properties: {
+              token: { type: 'string' },
+            },
+          },
+        },
+      },
+      this._verifyToken.bind(this)
+    );
 
     // Email verification routes
-    fastify.post('/send-verification-email', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['email'],
-          properties: {
-            email: { type: 'string', format: 'email' }
-          }
-        }
-      }
-    }, this._sendVerificationEmail.bind(this));
+    fastify.post(
+      '/send-verification-email',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+            },
+          },
+        },
+      },
+      this._sendVerificationEmail.bind(this)
+    );
 
-    fastify.post('/verify-email', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['token'],
-          properties: {
-            token: { type: 'string' }
-          }
-        }
-      }
-    }, this._verifyEmail.bind(this));
+    fastify.post(
+      '/verify-email',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['token'],
+            properties: {
+              token: { type: 'string' },
+            },
+          },
+        },
+      },
+      this._verifyEmail.bind(this)
+    );
 
-    fastify.post('/resend-verification-email', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['email'],
-          properties: {
-            email: { type: 'string', format: 'email' }
-          }
-        }
-      }
-    }, this._resendVerificationEmail.bind(this));
+    // Email verification with 6-digit code
+    fastify.post(
+      '/send-verification-code',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+            },
+          },
+        },
+      },
+      this._sendVerificationCode.bind(this)
+    );
+
+    fastify.post(
+      '/verify-code',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email', 'code'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              code: { type: 'string', pattern: '^\\d{6}$' },
+            },
+          },
+        },
+      },
+      this._verifyCode.bind(this)
+    );
+
+    fastify.post(
+      '/resend-verification-email',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+            },
+          },
+        },
+      },
+      this._resendVerificationEmail.bind(this)
+    );
 
     // Password reset routes
-    fastify.post('/forgot-password', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['email'],
-          properties: {
-            email: { type: 'string', format: 'email' }
-          }
-        }
-      }
-    }, this._forgotPassword.bind(this));
+    fastify.post(
+      '/forgot-password',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+            },
+          },
+        },
+      },
+      this._forgotPassword.bind(this)
+    );
 
-    fastify.post('/reset-password', {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['token', 'newPassword'],
-          properties: {
-            token: { type: 'string' },
-            newPassword: { type: 'string', minLength: 8 }
-          }
-        }
-      }
-    }, this._resetPassword.bind(this));
+    fastify.post(
+      '/reset-password',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['token', 'newPassword'],
+            properties: {
+              token: { type: 'string' },
+              newPassword: { type: 'string', minLength: 8 },
+            },
+          },
+        },
+      },
+      this._resetPassword.bind(this)
+    );
+
+    // Password reset with 6-digit code
+    fastify.post(
+      '/send-password-reset-code',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+            },
+          },
+        },
+      },
+      this._sendPasswordResetCode.bind(this)
+    );
+
+    fastify.post(
+      '/reset-password-with-code',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['email', 'code', 'newPassword'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              code: { type: 'string', pattern: '^\\d{6}$' },
+              newPassword: { type: 'string', minLength: 8 },
+            },
+          },
+        },
+      },
+      this._resetPasswordWithCode.bind(this)
+    );
   }
 
   /**
@@ -559,6 +688,88 @@ class FastifyRoutes {
     try {
       const { token, newPassword } = request.body;
       const result = await this.auth.resetPassword(token, newPassword);
+      
+      return {
+        success: true,
+        message: result.message
+      };
+    } catch (error) {
+      return reply.code(400).send({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Send verification code (6-digit)
+   */
+  async _sendVerificationCode(request, reply) {
+    try {
+      const { email } = request.body;
+      await this.auth.sendVerificationCode(email);
+      
+      return {
+        success: true,
+        message: 'Verification code sent successfully'
+      };
+    } catch (error) {
+      return reply.code(400).send({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Verify email with 6-digit code
+   */
+  async _verifyCode(request, reply) {
+    try {
+      const { email, code } = request.body;
+      const result = await this.auth.verifyCode(email, code);
+      
+      return {
+        success: true,
+        message: 'Email verified successfully',
+        data: result
+      };
+    } catch (error) {
+      return reply.code(400).send({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Send password reset code (6-digit)
+   */
+  async _sendPasswordResetCode(request, reply) {
+    try {
+      const { email } = request.body;
+      await this.auth.sendPasswordResetCode(email);
+      
+      return {
+        success: true,
+        message: 'If the email exists, a reset code has been sent.'
+      };
+    } catch (error) {
+      // Don't reveal if email exists
+      return {
+        success: true,
+        message: 'If the email exists, a reset code has been sent.'
+      };
+    }
+  }
+
+  /**
+   * Reset password with 6-digit code
+   */
+  async _resetPasswordWithCode(request, reply) {
+    try {
+      const { email, code, newPassword } = request.body;
+      const result = await this.auth.resetPasswordWithCode(email, code, newPassword);
       
       return {
         success: true,

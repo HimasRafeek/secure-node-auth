@@ -70,13 +70,17 @@ Once registered, you get these routes automatically:
 - `GET /auth/health` - Health check
 
 ### Email Verification Routes
-- `POST /auth/send-verification-email` - Send verification email
-- `POST /auth/verify-email` - Verify email with token
+- `POST /auth/send-verification-email` - Send verification email (URL method)
+- `POST /auth/verify-email` - Verify email with token (URL method)
 - `POST /auth/resend-verification-email` - Resend verification email
+- `POST /auth/send-verification-code` - Send 6-digit verification code
+- `POST /auth/verify-code` - Verify email with 6-digit code
 
 ### Password Reset Routes
-- `POST /auth/forgot-password` - Send password reset email
-- `POST /auth/reset-password` - Reset password with token
+- `POST /auth/forgot-password` - Send password reset email (URL method)
+- `POST /auth/reset-password` - Reset password with token (URL method)
+- `POST /auth/send-password-reset-code` - Send 6-digit reset code
+- `POST /auth/reset-password-with-code` - Reset password with 6-digit code
 
 ---
 
@@ -483,6 +487,67 @@ await fastify.listen({ port: 3000 });
 
 ---
 
+## 📧 6-Digit Code Examples (Fastify)
+
+### Send Verification Code
+```javascript
+// Send 6-digit verification code
+fastify.post('/custom/send-code', async (request, reply) => {
+  const { email } = request.body;
+  
+  try {
+    await auth.sendVerificationCode(email);
+    return { success: true, message: 'Code sent!' };
+  } catch (error) {
+    return reply.code(400).send({ error: error.message });
+  }
+});
+```
+
+### Verify Code
+```javascript
+// Verify 6-digit code
+fastify.post('/custom/verify-code', async (request, reply) => {
+  const { email, code } = request.body;
+  
+  try {
+    const result = await auth.verifyCode(email, code);
+    return { success: true, message: 'Email verified!', data: result };
+  } catch (error) {
+    return reply.code(400).send({ error: error.message });
+  }
+});
+```
+
+### Password Reset with Code
+```javascript
+// Send password reset code
+fastify.post('/custom/forgot-password-code', async (request, reply) => {
+  const { email } = request.body;
+  
+  try {
+    await auth.sendPasswordResetCode(email);
+    return { success: true, message: 'Reset code sent!' };
+  } catch (error) {
+    return { success: true, message: 'If email exists, code sent.' };
+  }
+});
+
+// Reset password with code
+fastify.post('/custom/reset-with-code', async (request, reply) => {
+  const { email, code, newPassword } = request.body;
+  
+  try {
+    const result = await auth.resetPasswordWithCode(email, code, newPassword);
+    return { success: true, message: result.message };
+  } catch (error) {
+    return reply.code(400).send({ error: error.message });
+  }
+});
+```
+
+---
+
 ## 📚 Additional Resources
 
 - [Fastify Documentation](https://www.fastify.io/)
@@ -490,6 +555,7 @@ await fastify.listen({ port: 3000 });
 - [JSON Schema Validation](https://json-schema.org/)
 - [SecureNodeAuth Main Docs](../README.md)
 - [Email Verification Guide](EMAIL_VERIFICATION_GUIDE.md)
+- [6-Digit Code Guide](VERIFICATION_AND_AUDIT_GUIDE.md)
 
 ---
 
