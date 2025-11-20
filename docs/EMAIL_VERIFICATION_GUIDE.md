@@ -1,5 +1,7 @@
 # Email Verification & Password Reset Guide
 
+> **v1.4.3+**: Full MySQL and PostgreSQL support. All examples work with both databases.
+
 Complete guide for setting up SMTP email features in SecureNodeAuth, including email verification and password reset functionality.
 
 ---

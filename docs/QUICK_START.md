@@ -1,5 +1,7 @@
 # Quick Start Guide - Secure Node Auth
 
+> **v1.4.3+**: Works with MySQL and PostgreSQL. Both databases have automatic SQL conversion and full feature parity.
+
 ## 📦 Installation
 
 ```bash

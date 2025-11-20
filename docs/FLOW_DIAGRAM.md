@@ -1,5 +1,7 @@
 # 🔄 Authentication Flow Diagram
 
+> **v1.4.3+**: All flows work identically with MySQL and PostgreSQL.
+
 ## How User Data Access Works
 
 ```

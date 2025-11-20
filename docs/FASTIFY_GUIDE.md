@@ -1,5 +1,7 @@
 # Fastify Integration Guide
 
+> **v1.4.3+**: Works seamlessly with MySQL and PostgreSQL. Automatic database compatibility.
+
 Complete guide for using SecureNodeAuth with Fastify framework.
 
 ---

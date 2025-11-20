@@ -1,5 +1,7 @@
 # TypeScript Guide
 
+> **v1.4.3+**: Full MySQL and PostgreSQL support with complete type definitions.
+
 SecureNodeAuth includes full TypeScript definitions for a better development experience with IntelliSense, type checking, and autocomplete.
 
 ## Table of Contents

@@ -1,5 +1,7 @@
 # Building Headless Apps with SecureNodeAuth
 
+> **v1.4.3+**: Full MySQL and PostgreSQL support. Automatic SQL conversion handles all database differences.
+
 ## Complete Guide: Income/Expense Tracker Example
 
 This guide demonstrates how to use SecureNodeAuth as a secure authentication layer for complex headless applications with custom database schemas.

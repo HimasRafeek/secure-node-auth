@@ -1,10 +1,12 @@
 # 🚀 Getting Started with Secure Node Auth
 
+> **v1.4.3+**: Supports both MySQL and PostgreSQL with automatic SQL conversion and full compatibility.
+
 ## Prerequisites
 
 Before you begin, ensure you have:
 - **Node.js** v14 or higher
-- **MySQL** 5.7+ or MariaDB 10.2+
+- **MySQL** 5.7+ / MariaDB 10.2+ OR **PostgreSQL** 10+
 - **npm** or **yarn**
 
 ## Step-by-Step Setup
