@@ -694,6 +694,71 @@ const [rows] = await pool.execute(
 console.log('Active users:', rows[0].total);
 ```
 
+## 🔧 Troubleshooting
+
+### Connection Timeout (ETIMEDOUT)
+
+If you're getting `ETIMEDOUT` errors:
+
+```javascript
+const auth = new SecureNodeAuth({
+  connection: {
+    host: 'localhost',
+    user: 'root',
+    password: 'password',
+    database: 'myapp',
+    // Add these timeout settings
+    connectTimeout: 20000,      // 20 seconds (default: 10s)
+    acquireTimeout: 20000,      // 20 seconds (default: 10s)
+    timeout: 20000,             // 20 seconds (default: 10s)
+    retryAttempts: 5,           // Retry 5 times (default: 3)
+    retryDelay: 2000            // Wait 2s between retries (default: 1s)
+  }
+});
+```
+
+**Common causes:**
+- ✅ MySQL server not running → `sudo service mysql start`
+- ✅ Wrong host/port → Verify connection details
+- ✅ Firewall blocking connection → Check firewall rules
+- ✅ MySQL not accepting remote connections → Edit `my.cnf` (bind-address)
+
+### Connection Refused (ECONNREFUSED)
+
+```bash
+# Check if MySQL is running
+sudo service mysql status
+
+# Start MySQL
+sudo service mysql start
+
+# Check MySQL port
+netstat -an | grep 3306
+```
+
+### Access Denied (ER_ACCESS_DENIED_ERROR)
+
+```sql
+-- Grant permissions to user
+GRANT ALL PRIVILEGES ON myapp.* TO 'myuser'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### Slow Initialization
+
+Enable connection pooling (already enabled by default):
+
+```javascript
+const auth = new SecureNodeAuth({
+  connection: {
+    connectionLimit: 20,        // Max connections (default: 10)
+    queueLimit: 0,              // No queue limit (default: 0)
+    enableKeepAlive: true,      // Keep connections alive (default: true)
+    keepAliveInitialDelay: 0    // Initial delay (default: 0)
+  }
+});
+```
+
 ## 📚 Additional Guides
 
 - 🗄️ [PostgreSQL Integration Guide](docs/POSTGRES_GUIDE.md) - Complete guide for PostgreSQL, migration, and Docker setup
