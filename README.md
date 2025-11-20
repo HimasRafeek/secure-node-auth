@@ -465,8 +465,15 @@ POST /auth/login
 
 ### Password Reset
 
+**URL-Based Reset:**
 - `await auth.sendPasswordResetEmail(email, url)` - Send reset email
 - `await auth.resetPassword(token, newPassword)` - Reset password
+
+**6-Digit Code Reset (New!):**
+- `await auth.sendPasswordResetCode(email, options)` - Send 6-digit reset code
+- `await auth.resetPasswordWithCode(email, code, newPassword)` - Reset with code
+
+> 💡 **Tip**: Use URL reset for web apps, 6-digit codes for mobile apps. Codes expire in 15 minutes (customizable).
 
 ### Database Maintenance
 

@@ -1,10 +1,14 @@
-# Email Verification & Audit Logger Guide
+# Email Verification & Password Reset with 6-Digit Codes Guide
 
-## 6-Digit Verification Codes (New Feature!)
+## 6-Digit Codes (New Feature!)
 
 ### Overview
 
-You can now use **6-digit numeric verification codes** as an alternative to URL-based email verification. This is perfect for mobile apps or when you want a simpler user experience.
+You can now use **6-digit numeric codes** as an alternative to URL-based methods for both:
+- ✅ **Email Verification** - Verify new user accounts
+- ✅ **Password Reset** - Secure password recovery
+
+This is perfect for mobile apps or when you want a simpler, more modern user experience.
 
 ### Quick Start
 
@@ -98,7 +102,121 @@ app.post('/api/auth/verify-code', async (req, res) => {
 });
 ```
 
-### Comparison: URL vs Code Verification
+---
+
+## 6-Digit Password Reset Codes (New Feature!)
+
+### Overview
+
+Just like email verification, you can now use **6-digit codes for password reset** instead of URL-based password reset links.
+
+### Quick Start
+
+#### 1. Send Password Reset Code
+
+```javascript
+// Send 6-digit reset code
+await auth.sendPasswordResetCode('user@example.com');
+
+// User receives email with code like: 987654
+```
+
+#### 2. Reset Password with Code
+
+```javascript
+// User enters code and new password
+const result = await auth.resetPasswordWithCode(
+  'user@example.com',
+  '987654',
+  'NewSecurePass123!'
+);
+
+console.log(result);
+// { success: true, message: 'Password reset successfully' }
+```
+
+### Configuration Options
+
+```javascript
+// Custom expiration time (default: 15 minutes)
+await auth.sendPasswordResetCode('user@example.com', {
+  expiresInMinutes: 10,
+});
+```
+
+### Express.js Example - Password Reset with Code
+
+```javascript
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+// Send password reset code
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    await auth.sendPasswordResetCode(email, {
+      expiresInMinutes: 15,
+    });
+
+    res.json({
+      success: true,
+      message: 'If the email exists, a reset code has been sent.',
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Reset password with code
+app.post('/api/auth/reset-password-code', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    await auth.resetPasswordWithCode(email, code, newPassword);
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully. You can now log in.',
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+```
+
+### Custom Email Template for Password Reset Code
+
+```javascript
+const auth = new SecureNodeAuth({
+  emailTemplates: {
+    passwordResetCode: {
+      subject: 'Your Password Reset Code - MyApp',
+      html: (code, email, expiresInMinutes) => `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial; padding: 20px;">
+          <h2>Password Reset Request</h2>
+          <p>Your password reset code is:</p>
+          <div style="font-size: 32px; font-weight: bold; padding: 20px; background: #f0f0f0; text-align: center;">
+            ${code}
+          </div>
+          <p>This code expires in ${expiresInMinutes} minutes.</p>
+          <p>If you didn't request this, ignore this email.</p>
+        </body>
+        </html>
+      `,
+    },
+  },
+});
+```
+
+---
+
+## Comparison: URL vs Code Methods
+
+### Email Verification
 
 | Feature          | URL Verification                            | 6-Digit Code                              |
 | ---------------- | ------------------------------------------- | ----------------------------------------- |
@@ -109,13 +227,25 @@ app.post('/api/auth/verify-code', async (req, res) => {
 | **Token Length** | 64 characters                               | 6 digits                                  |
 | **Method**       | `sendVerificationEmail()` + `verifyEmail()` | `sendVerificationCode()` + `verifyCode()` |
 
-### Security Features
+### Password Reset
+
+| Feature          | URL Reset                                          | 6-Digit Code                                               |
+| ---------------- | -------------------------------------------------- | ---------------------------------------------------------- |
+| **Expiration**   | 1 hour                                             | 15 minutes (customizable)                                  |
+| **User Action**  | Click link in email                                | Enter code + new password in app                           |
+| **Best For**     | Web apps                                           | Mobile apps, better UX                                     |
+| **Security**     | Long random token                                  | Short numeric code                                         |
+| **Token Length** | 64 characters                                      | 6 digits                                                   |
+| **Method**       | `sendPasswordResetEmail()` + `resetPassword()`     | `sendPasswordResetCode()` + `resetPasswordWithCode()`      |
+
+### Security Features (Both Methods)
 
 - **Automatic cleanup**: Old codes are deleted when sending new ones
-- **Expiration**: Codes expire after 10 minutes (customizable)
+- **Expiration**: Codes expire quickly (10-15 minutes, customizable)
 - **Format validation**: Only accepts exactly 6 digits
-- **Rate limiting**: Prevent brute force attacks (use Express rate limiting)
-- **Single use**: Codes are deleted after successful verification
+- **Rate limiting**: Prevent brute force attacks (implement Express rate limiting)
+- **Single use**: Codes are deleted after successful use
+- **Force re-login**: All sessions revoked after password reset
 
 ### Error Handling
 

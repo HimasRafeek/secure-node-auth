@@ -139,15 +139,25 @@ await auth.verifyAccessToken(token);
 await auth.logout(refreshToken);
 await auth.logoutAll(userId);
 
-// Email Verification
+// Email Verification (URL-based)
 await auth.sendVerificationEmail(email, verificationUrl);
 await auth.verifyEmail(token);
 await auth.resendVerificationEmail(email, verificationUrl);
+
+// Email Verification (6-digit code) 🆕
+await auth.sendVerificationCode(email, { expiresInMinutes: 10 });
+await auth.verifyCode(email, code);
+
+// Check verification status
 await auth.isEmailVerified(userId);
 
-// Password Reset
+// Password Reset (URL-based)
 await auth.sendPasswordResetEmail(email, resetUrl);
 await auth.resetPassword(token, newPassword);
+
+// Password Reset (6-digit code) 🆕
+await auth.sendPasswordResetCode(email, { expiresInMinutes: 15 });
+await auth.resetPasswordWithCode(email, code, newPassword);
 
 // Database Maintenance & Utilities
 await auth.cleanupExpiredTokens();
@@ -576,7 +586,7 @@ const verified = await auth.isEmailVerified(userId);
 ### Password Reset Methods
 
 #### `async sendPasswordResetEmail(email, resetUrl)`
-Send password reset link to user's email.
+Send password reset link to user's email (URL-based reset).
 ```javascript
 await auth.sendPasswordResetEmail(
   'user@example.com',
@@ -584,10 +594,64 @@ await auth.sendPasswordResetEmail(
 );
 ```
 
+#### `async sendPasswordResetCode(email, options)` 🆕
+Send 6-digit password reset code via email (alternative to URL-based reset).
+- **Parameters:**
+  - `email` (string): User's email address
+  - `options.expiresInMinutes` (number, optional): Code expiration time (default: 15 minutes)
+- **Returns:** `{ success, messageId, message, code }`
+- **Best for:** Mobile apps, better UX
+
+```javascript
+// Send reset code
+await auth.sendPasswordResetCode('user@example.com', {
+  expiresInMinutes: 15
+});
+
+// Custom template
+const auth = new SecureNodeAuth({
+  emailTemplates: {
+    passwordResetCode: {
+      subject: 'Your Reset Code',
+      html: (code, email, minutes) => `Your code: ${code}`
+    }
+  }
+});
+```
+
 #### `async resetPassword(token, newPassword)`
 Reset password using token from reset email link.
 ```javascript
 await auth.resetPassword(tokenFromURL, 'NewSecurePass123!');
+```
+
+#### `async resetPasswordWithCode(email, code, newPassword)` 🆕
+Reset password using 6-digit code (alternative to token-based reset).
+- **Parameters:**
+  - `email` (string): User's email address
+  - `code` (string): 6-digit reset code
+  - `newPassword` (string): New password (must meet security requirements)
+- **Returns:** `{ success, message }`
+- **Security:** All user sessions are revoked after successful reset
+
+```javascript
+// Reset password with code
+await auth.resetPasswordWithCode(
+  'user@example.com',
+  '987654',
+  'NewSecurePass123!'
+);
+
+// Express.js example
+app.post('/api/reset-password-code', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    await auth.resetPasswordWithCode(email, code, newPassword);
+    res.json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 ```
 
 ### Database Maintenance Methods

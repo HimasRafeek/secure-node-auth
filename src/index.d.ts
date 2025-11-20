@@ -320,12 +320,43 @@ declare module 'secure-node-auth' {
     }>;
 
     /**
+     * Send 6-digit password reset code via email (optional alternative to URL-based reset)
+     * @param email - User email address
+     * @param options - Optional configuration
+     */
+    sendPasswordResetCode(
+      email: string,
+      options?: {
+        expiresInMinutes?: number;
+      }
+    ): Promise<{
+      success: boolean;
+      messageId: string;
+      message: string;
+    }>;
+
+    /**
      * Reset password with token
      * @param token - Reset token from email
      * @param newPassword - New password
      */
     resetPassword(
       token: string,
+      newPassword: string
+    ): Promise<{
+      success: boolean;
+      message: string;
+    }>;
+
+    /**
+     * Reset password with 6-digit code
+     * @param email - User email address
+     * @param code - 6-digit reset code
+     * @param newPassword - New password
+     */
+    resetPasswordWithCode(
+      email: string,
+      code: string,
       newPassword: string
     ): Promise<{
       success: boolean;

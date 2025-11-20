@@ -1660,6 +1660,38 @@ class SecureNodeAuth {
   }
 
   /**
+   * Send 6-digit password reset code via email (optional alternative to URL-based reset)
+   * @param {string} email - User email address
+   * @param {Object} options - Optional configuration
+   * @param {number} options.expiresInMinutes - Code expiration time (default: 15 minutes)
+   * @returns {Promise<Object>} Result with success status
+   *
+   * @example
+   * // Send password reset code
+   * await auth.sendPasswordResetCode('user@example.com');
+   *
+   * @example
+   * // Send code with custom expiration
+   * await auth.sendPasswordResetCode('user@example.com', { expiresInMinutes: 10 });
+   */
+  async sendPasswordResetCode(email, options = {}) {
+    this._ensureInitialized();
+
+    if (!this.emailService || !this.emailService.transporter) {
+      throw new Error('Email service not configured. Please set up SMTP settings.');
+    }
+
+    if (!email || typeof email !== 'string') {
+      throw new Error('Valid email is required');
+    }
+
+    // Normalize email
+    email = email.trim().toLowerCase();
+
+    return await this.emailService.sendPasswordResetCode(email, options);
+  }
+
+  /**
    * Reset password with token
    * @param {string} token - Reset token from email
    * @param {string} newPassword - New password
@@ -1747,6 +1779,64 @@ class SecureNodeAuth {
     } finally {
       connection.release();
     }
+  }
+
+  /**
+   * Reset password with 6-digit code
+   * @param {string} email - User email address
+   * @param {string} code - 6-digit reset code
+   * @param {string} newPassword - New password
+   * @returns {Promise<Object>} Reset result
+   *
+   * @example
+   * // Reset password with code
+   * const result = await auth.resetPasswordWithCode('user@example.com', '123456', 'NewPass123!');
+   * console.log(result); // { success: true, message: 'Password reset successfully' }
+   */
+  async resetPasswordWithCode(email, code, newPassword) {
+    this._ensureInitialized();
+
+    if (!email || typeof email !== 'string') {
+      throw new Error('Valid email is required');
+    }
+
+    if (!code || typeof code !== 'string') {
+      throw new Error('Valid 6-digit code is required');
+    }
+
+    if (!newPassword || typeof newPassword !== 'string') {
+      throw new Error('Valid new password is required');
+    }
+
+    // Normalize email
+    email = email.trim().toLowerCase();
+
+    // Validate code format (6 digits)
+    if (!/^\d{6}$/.test(code)) {
+      throw new Error('Code must be exactly 6 digits');
+    }
+
+    // Validate new password
+    this.security.validatePassword(newPassword);
+
+    // Hash new password
+    const hashedPassword = await this.security.hashPassword(newPassword);
+
+    // Reset password with code
+    const result = await this.emailService.resetPasswordWithCode(email, code, hashedPassword);
+
+    // Audit log
+    this.auditLogger('PASSWORD_RESET', {
+      userId: result.userId,
+      email: result.email,
+      method: 'code',
+      success: true,
+    });
+
+    return {
+      success: true,
+      message: 'Password reset successfully',
+    };
   }
 
   /**

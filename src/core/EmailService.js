@@ -464,6 +464,151 @@ class EmailService {
   }
 
   /**
+   * Send 6-digit password reset code via email (alternative to URL-based reset)
+   * @param {string} email - User email address
+   * @param {Object} options - Optional configuration
+   * @param {number} options.expiresInMinutes - Code expiration time (default: 15 minutes)
+   * @returns {Promise<Object>} Result with success status
+   */
+  async sendPasswordResetCode(email, options = {}) {
+    if (!this.transporter) {
+      throw new Error('Email service not configured. Please set up SMTP settings.');
+    }
+
+    const { expiresInMinutes = 15 } = options;
+
+    try {
+      // Find user
+      const [users] = await this.dbPool.execute(
+        `SELECT id FROM \`${this.tables.users}\` WHERE email = ? LIMIT 1`,
+        [email]
+      );
+
+      if (users.length === 0) {
+        // Don't reveal if user exists for security
+        return { success: true, message: 'If the email exists, a reset code has been sent.' };
+      }
+
+      const userId = users[0].id;
+
+      // Generate 6-digit code
+      const code = this.generate6DigitCode();
+      const expiresAt = Date.now() + expiresInMinutes * 60 * 1000;
+
+      // Store code in users table
+      await this.dbPool.execute(
+        `UPDATE \`${this.tables.users}\` 
+         SET resetPasswordToken = ?, resetPasswordExpires = ? 
+         WHERE id = ?`,
+        [code, expiresAt, userId]
+      );
+
+      // Email template
+      const mailOptions = {
+        from: this.config.smtp.from || this.config.smtp.auth.user,
+        to: email,
+        subject:
+          this.config.emailTemplates?.passwordResetCode?.subject || 'Your Password Reset Code',
+        html: this.config.emailTemplates?.passwordResetCode?.html
+          ? this.config.emailTemplates.passwordResetCode.html(code, email, expiresInMinutes)
+          : this._defaultPasswordResetCodeTemplate(code, email, expiresInMinutes),
+      };
+
+      // Send email
+      const info = await this.transporter.sendMail(mailOptions);
+
+      console.log('[EmailService] Password reset code sent:', info.messageId);
+
+      return {
+        success: true,
+        messageId: info.messageId,
+        message: 'If the email exists, a reset code has been sent.',
+        code, // Return for testing only
+      };
+    } catch (error) {
+      console.error('[EmailService] Failed to send password reset code:', error.message);
+      // Don't reveal internal errors
+      return {
+        success: true,
+        message: 'If the email exists, a reset code has been sent.',
+      };
+    }
+  }
+
+  /**
+   * Verify password reset code and reset password
+   * @param {string} email - User email address
+   * @param {string} code - 6-digit reset code
+   * @param {string} newPassword - New password (hashed by caller)
+   * @returns {Promise<Object>} Reset result
+   */
+  async resetPasswordWithCode(email, code, newPassword) {
+    const connection = await this.dbPool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // Find user with matching code
+      const [users] = await connection.execute(
+        `SELECT id, email, resetPasswordToken, resetPasswordExpires FROM \`${this.tables.users}\` 
+         WHERE email = ? AND resetPasswordToken = ? LIMIT 1`,
+        [email, code]
+      );
+
+      if (users.length === 0) {
+        throw new Error('Invalid or expired reset code');
+      }
+
+      const user = users[0];
+
+      // Check if code expired
+      if (Date.now() > user.resetPasswordExpires) {
+        // Clear expired code
+        await connection.execute(
+          `UPDATE \`${this.tables.users}\` 
+           SET resetPasswordToken = NULL, resetPasswordExpires = NULL 
+           WHERE id = ?`,
+          [user.id]
+        );
+        await connection.commit();
+        throw new Error('Reset code has expired. Please request a new one.');
+      }
+
+      // Update password and clear reset code
+      await connection.execute(
+        `UPDATE \`${this.tables.users}\` 
+         SET password = ?, resetPasswordToken = NULL, resetPasswordExpires = NULL 
+         WHERE id = ?`,
+        [newPassword, user.id]
+      );
+
+      // Revoke all refresh tokens for this user (force re-login)
+      await connection.execute(
+        `UPDATE \`${this.tables.refreshTokens}\` 
+         SET revoked = TRUE 
+         WHERE userId = ?`,
+        [user.id]
+      );
+
+      await connection.commit();
+
+      console.log('[EmailService] Password reset successfully with code for user:', user.id);
+
+      return {
+        success: true,
+        userId: user.id,
+        email: user.email,
+        message: 'Password reset successfully',
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
+  /**
    * Clean up expired tokens
    */
   async cleanupExpiredTokens() {
@@ -587,6 +732,63 @@ class EmailService {
           <p style="color: #666; font-size: 14px;">
             If you didn't request this code, you can safely ignore this email.
           </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+          <p>This is an automated email, please do not reply.</p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Default password reset code email template
+   */
+  _defaultPasswordResetCodeTemplate(code, email, expiresInMinutes) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Password Reset Code</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0;">Password Reset Code</h1>
+        </div>
+        
+        <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+          <p>Hello,</p>
+          
+          <p>You requested a password reset. Your reset code is:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background: white; border: 2px solid #f5576c; border-radius: 10px; padding: 20px; display: inline-block;">
+              <span style="font-size: 36px; font-weight: bold; color: #f5576c; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                ${code}
+              </span>
+            </div>
+          </div>
+          
+          <p style="text-align: center; font-size: 16px; font-weight: bold; color: #f5576c;">
+            Enter this code to reset your password
+          </p>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 30px;">
+            This reset code will expire in <strong>${expiresInMinutes} minutes</strong>.
+          </p>
+          
+          <p style="color: #666; font-size: 14px;">
+            If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+          </p>
+          
+          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-top: 20px; border-radius: 4px;">
+            <p style="margin: 0; color: #856404; font-size: 14px;">
+              <strong>Security Tip:</strong> Never share this code with anyone. We will never ask for your code via phone or email.
+            </p>
+          </div>
         </div>
         
         <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
