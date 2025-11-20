@@ -331,6 +331,56 @@ POST /auth/login
 }
 ```
 
+## 📋 Complete API Methods
+
+### Core Authentication
+- `await auth.init()` - Initialize system and create tables
+- `await auth.register(userData)` - Register new user
+- `await auth.login(email, password)` - Login and get tokens
+- `await auth.refreshToken(refreshToken)` - Get new access token
+- `await auth.logout(refreshToken)` - Logout single session
+- `await auth.logoutAll(userId)` - Logout all sessions
+- `await auth.verifyAccessToken(token)` - Verify JWT token
+
+### User Management
+- `await auth.getUserById(userId)` - Get user by ID
+- `await auth.getUserByEmail(email)` - Get user by email
+- `await auth.updateUser(userId, updates)` - Update user data
+- `await auth.updateProfile(userId, updates)` - Update profile (alias)
+- `await auth.changePassword(userId, oldPass, newPass)` - Change password
+- `await auth.getUserCount()` - Get total user count
+- `await auth.isAccountLocked(email)` - Check if account locked
+
+### Email Verification
+- `await auth.sendVerificationEmail(email, url)` - Send verification email
+- `await auth.verifyEmail(token)` - Verify email with token
+- `await auth.resendVerificationEmail(email, url)` - Resend verification
+- `await auth.isEmailVerified(userId)` - Check if email verified
+
+### Password Reset
+- `await auth.sendPasswordResetEmail(email, url)` - Send reset email
+- `await auth.resetPassword(token, newPassword)` - Reset password
+
+### Database Maintenance
+- `await auth.cleanupExpiredTokens()` - Clean expired tokens
+- `await auth.cleanupExpiredLoginAttempts(days)` - Clean old attempts
+- `await auth.cleanupRevokedRefreshTokens(days)` - Clean revoked tokens
+- `await auth.performMaintenance(options)` - Run all cleanup
+- `auth.getPool()` - Get raw database pool
+
+### Schema Customization
+- `auth.addField(config)` - Add field before init
+- `await auth.dangerouslyAddColumn(config, options)` - Add column at runtime
+- `await auth.dangerouslyMigrateSchema(fields, options)` - Batch migration
+
+### Hooks & Integration
+- `auth.on(event, callback)` - Register lifecycle hooks
+- `auth.router(options)` - Get Express/Fastify router
+- `auth.middleware()` - Get auth middleware
+- `await auth.close()` - Close database connection
+
+📖 **[Complete API Reference](API_REFERENCE.md)** - Detailed documentation with examples
+
 ## 🛡️ Security Features
 
 ### Password Security
