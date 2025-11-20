@@ -15,6 +15,13 @@ declare module 'secure-node-auth' {
     waitForConnections?: boolean;
     connectionLimit?: number;
     queueLimit?: number;
+    connectTimeout?: number;
+    acquireTimeout?: number;
+    timeout?: number;
+    retryAttempts?: number;
+    retryDelay?: number;
+    enableKeepAlive?: boolean;
+    keepAliveInitialDelay?: number;
   }
 
   export interface JWTConfig {

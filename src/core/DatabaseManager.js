@@ -24,14 +24,44 @@ class DatabaseManager {
         throw new Error('Database host, user, and database name are required');
       }
 
-      this.pool = mysql.createPool(this.config);
+      // Add connection timeout defaults if not provided
+      const poolConfig = {
+        ...this.config,
+        connectTimeout: this.config.connectTimeout || 10000, // 10 seconds
+        acquireTimeout: this.config.acquireTimeout || 10000, // 10 seconds
+        timeout: this.config.timeout || 10000, // 10 seconds
+        waitForConnections: this.config.waitForConnections !== false,
+        connectionLimit: this.config.connectionLimit || 10,
+        queueLimit: this.config.queueLimit || 0,
+        enableKeepAlive: this.config.enableKeepAlive !== false,
+        keepAliveInitialDelay: this.config.keepAliveInitialDelay || 0,
+      };
 
-      // Test connection
-      const connection = await this.pool.getConnection();
-      await connection.ping();
-      connection.release();
+      this.pool = mysql.createPool(poolConfig);
 
-      return true;
+      // Test connection with retry logic
+      let lastError;
+      const maxRetries = this.config.retryAttempts || 3;
+      const retryDelay = this.config.retryDelay || 1000;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const connection = await this.pool.getConnection();
+          await connection.ping();
+          connection.release();
+          return true;
+        } catch (error) {
+          lastError = error;
+
+          if (attempt < maxRetries) {
+            // Wait before retrying
+            await new Promise((resolve) => setTimeout(resolve, retryDelay * attempt));
+          }
+        }
+      }
+
+      // If we got here, all retries failed
+      throw lastError;
     } catch (error) {
       // Clean up pool on failure
       if (this.pool) {
@@ -42,7 +72,32 @@ class DatabaseManager {
         }
         this.pool = null;
       }
-      throw new Error(`Database connection failed: ${error.message}`);
+
+      // Provide helpful error messages
+      let errorMessage = `Database connection failed: ${error.message}`;
+
+      if (error.code === 'ETIMEDOUT' || error.message.includes('ETIMEDOUT')) {
+        errorMessage +=
+          '\n\n💡 Troubleshooting tips:\n' +
+          '  • Check if MySQL server is running\n' +
+          '  • Verify the host/port are correct\n' +
+          '  • Check firewall settings\n' +
+          '  • Ensure MySQL is accepting remote connections (if not localhost)\n' +
+          '  • Try increasing connectTimeout in config';
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage +=
+          '\n\n💡 Connection refused:\n' +
+          '  • MySQL server might not be running\n' +
+          '  • Check if port 3306 (or your custom port) is correct\n' +
+          '  • Verify MySQL is listening on the specified host';
+      } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+        errorMessage +=
+          '\n\n💡 Access denied:\n' +
+          '  • Check username and password\n' +
+          '  • Verify user has permissions to the database';
+      }
+
+      throw new Error(errorMessage);
     }
   }
 
@@ -662,9 +717,7 @@ class DatabaseManager {
     this._ensureConnected();
 
     try {
-      const [rows] = await this.pool.execute(
-        `SELECT COUNT(*) as count FROM \`${tableName}\``
-      );
+      const [rows] = await this.pool.execute(`SELECT COUNT(*) as count FROM \`${tableName}\``);
       return parseInt(rows[0].count, 10);
     } catch (error) {
       console.error('[DatabaseManager] Error getting user count:', error.message);
