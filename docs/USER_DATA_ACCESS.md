@@ -4,6 +4,8 @@
 
 This guide shows you how to use **secure-node-auth** to protect routes and access data belonging to the authenticated user (like posts, comments, orders, etc.).
 
+> **v1.4.3+**: Full MySQL and PostgreSQL compatibility with automatic SQL conversion and result normalization. All examples work seamlessly with both databases.
+
 ## 🎯 Key Concept: `req.user`
 
 When a user is authenticated, the `auth.middleware()` adds the user's information to `req.user`:

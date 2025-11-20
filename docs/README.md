@@ -1,6 +1,6 @@
 # 🔐 Secure Node Auth
 
-> Blazing fast, zero-config MySQL authentication system with JWT. Set up secure auth in seconds!
+> Blazing fast, zero-config authentication system with JWT for **MySQL & PostgreSQL**. Set up secure auth in seconds!
 
 [![npm version](https://img.shields.io/npm/v/secure-node-auth.svg)](https://www.npmjs.com/package/secure-node-auth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,8 +9,9 @@
 ## ✨ Features
 
 - ⚡ **Zero Configuration** - Works out of the box with sensible defaults
+- 🗄️ **MySQL & PostgreSQL Support** - Choose your preferred database with one line of config
 - 🔒 **Production-Ready Security** - Bcrypt hashing, JWT tokens, rate limiting, account lockout
-- 🚀 **Lightning Fast** - Built on mysql2 with connection pooling and optimized queries
+- 🚀 **Lightning Fast** - Built with connection pooling and optimized queries
 - 🎨 **Highly Customizable** - Add custom fields, hooks, and configurations
 - 🔄 **Auto Schema Setup** - Automatically creates tables, indexes, and relationships
 - 🎯 **Express Ready** - Pre-built routes and middleware
@@ -27,7 +28,7 @@ npm install secure-node-auth
 
 **Dependencies:**
 
-- `mysql2` - MySQL client
+- `mysql2` or `pg` - Database client (choose one or both)
 - `jsonwebtoken` - JWT token generation
 - `bcrypt` - Password hashing
 - `validator` - Input validation
@@ -63,6 +64,38 @@ That's it! You now have a complete authentication system with:
 - ✅ Password change
 - ✅ Profile management
 - ✅ Logout (single/all devices)
+
+## 🗄️ Database Selection
+
+Choose between MySQL or PostgreSQL by setting the `type` option:
+
+### MySQL (Default)
+```javascript
+const auth = new SecureNodeAuth({
+  type: 'mysql',  // or omit this (mysql is default)
+  connection: {
+    host: 'localhost',
+    user: 'root',
+    password: 'your_password',
+    database: 'myapp',
+  },
+});
+```
+
+### PostgreSQL
+```javascript
+const auth = new SecureNodeAuth({
+  type: 'postgres',
+  connection: {
+    host: 'localhost',
+    user: 'postgres',
+    password: 'your_password',
+    database: 'myapp',
+  },
+});
+```
+
+> **v1.4.3+**: Both databases are fully compatible with automatic SQL conversion, case sensitivity handling, and result normalization. Your code works identically with either database.
 
 ## 📖 Usage Examples
 

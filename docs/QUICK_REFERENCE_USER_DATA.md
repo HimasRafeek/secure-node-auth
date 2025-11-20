@@ -1,5 +1,7 @@
 # 🎯 Quick Reference: User Data Access
 
+> **v1.4.3+**: Full MySQL and PostgreSQL compatibility with automatic SQL conversion. All examples work seamlessly with both databases.
+
 ## The Essential Pattern
 
 ```javascript
