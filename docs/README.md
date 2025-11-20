@@ -102,6 +102,8 @@ app.listen(3000, () => console.log('Server running on port 3000'));
 
 ### Adding Custom Fields
 
+**✅ Recommended: Add fields before initialization**
+
 ```javascript
 const auth = new SecureNodeAuth({
   /* config */
@@ -138,6 +140,30 @@ await auth.register({
   subscriptionTier: 'premium',
 });
 ```
+
+**⚠️ Advanced: Runtime schema changes (use with caution)**
+
+For existing databases, you can add columns after initialization:
+
+```javascript
+// Already initialized
+await auth.init();
+
+// Add single column (⚠️ can cause table locks)
+await auth.dangerouslyAddColumn({
+  name: 'phoneNumber',
+  type: 'VARCHAR(20)',
+  unique: true,
+}, { confirmed: true });
+
+// Add multiple columns
+await auth.dangerouslyMigrateSchema([
+  { name: 'age', type: 'INTEGER', defaultValue: 0 },
+  { name: 'city', type: 'VARCHAR(100)' },
+], { confirmed: true });
+```
+
+**📖 See [DANGEROUS_MIGRATIONS.md](DANGEROUS_MIGRATIONS.md) for complete guide.**
 
 ### Using Hooks
 

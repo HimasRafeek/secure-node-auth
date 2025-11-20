@@ -137,6 +137,8 @@ await auth.logoutAll(userId);
 
 // Customization
 auth.addField(fieldConfig);
+auth.dangerouslyAddColumn(fieldConfig, options);
+auth.dangerouslyMigrateSchema(fields, options);
 auth.on(hookEvent, callback);
 auth.router(options);
 auth.middleware();
@@ -148,6 +150,8 @@ await auth.close();
 ## 🎨 Customization Examples
 
 ### Add Custom Fields
+
+**Before Initialization (✅ Recommended):**
 
 ```javascript
 auth.addField({ 
@@ -161,7 +165,30 @@ auth.addField({
   type: "ENUM('user', 'admin')", 
   defaultValue: 'user' 
 });
+
+await auth.init(); // Tables created with custom fields
 ```
+
+**After Initialization (⚠️ Dangerous - Runtime Migration):**
+
+```javascript
+await auth.init();
+
+// Add single column
+await auth.dangerouslyAddColumn({
+  name: 'phoneNumber',
+  type: 'VARCHAR(20)',
+  unique: true,
+}, { confirmed: true });
+
+// Add multiple columns
+await auth.dangerouslyMigrateSchema([
+  { name: 'age', type: 'INTEGER', defaultValue: 0 },
+  { name: 'city', type: 'VARCHAR(100)' },
+], { confirmed: true });
+```
+
+**📖 See [DANGEROUS_MIGRATIONS.md](DANGEROUS_MIGRATIONS.md) for complete guide.**
 
 ### Add Hooks
 
@@ -310,6 +337,7 @@ secure_auth_login_attempts
 
 **"Cannot add fields after initialization"**
 - Call `addField()` BEFORE `auth.init()`
+- For existing databases, use `dangerouslyAddColumn()` (see [DANGEROUS_MIGRATIONS.md](DANGEROUS_MIGRATIONS.md))
 
 **"Invalid token"**
 - Token may be expired (15min for access tokens)

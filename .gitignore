@@ -49,6 +49,11 @@ lerna-debug.log*
 # Internal documentation and review files
 POSTGRES_CODE_REVIEW.md
 
+# Test databases (if created locally)
+*.db
+*.sqlite
+*.sqlite3
+
 # Security documentation (generated, not needed in repo)
 SECURITY_CODE_ANALYSIS_REPORT.md
 SECURITY_HEADERS.md

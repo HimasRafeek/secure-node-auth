@@ -282,7 +282,12 @@ class SecureNodeAuth {
    */
   addField(field) {
     if (this.initialized) {
-      throw new Error('Cannot add fields after initialization. Call addField() before init()');
+      throw new Error(
+        'Cannot add fields after initialization. Call addField() before init().\n\n' +
+        '💡 For existing databases, use dangerouslyAddColumn() instead:\n' +
+        '   auth.dangerouslyAddColumn({ name: "fieldName", type: "VARCHAR(255)" }, { confirmed: true })\n\n' +
+        '⚠️  WARNING: dangerouslyAddColumn() can cause table locks and downtime.'
+      );
     }
 
     if (!field || typeof field !== 'object') {
@@ -338,6 +343,553 @@ class SecureNodeAuth {
 
     console.log(`[SecureNodeAuth] Custom field added: ${name} (${type})`);
     return this;
+  }
+
+  /**
+   * ⚠️ DANGEROUS: Add column to existing table at runtime
+   * 
+   * This method adds a new column to an already initialized database table.
+   * USE WITH EXTREME CAUTION - Can cause table locks and downtime on production databases.
+   * 
+   * @param {Object} fieldConfig - Field configuration
+   * @param {string} fieldConfig.name - Column name (alphanumeric and underscore only)
+   * @param {string} fieldConfig.type - SQL data type (e.g., 'VARCHAR(20)', 'INTEGER', 'DECIMAL(10,2)')
+   * @param {boolean} [fieldConfig.unique=false] - Add unique constraint
+   * @param {boolean} [fieldConfig.required=false] - Add NOT NULL constraint (requires defaultValue if table has data)
+   * @param {*} [fieldConfig.defaultValue] - Default value for existing and new rows
+   * @param {Object} [options] - Migration options
+   * @param {boolean} [options.confirmed=false] - REQUIRED: Must be true to proceed (safety check)
+   * @param {boolean} [options.skipIfExists=true] - Skip if column already exists (safe retry)
+   * @param {boolean} [options.skipIndexCreation=false] - Skip index creation for performance
+   * @param {number} [options.warnThreshold=1000] - Warn if table has more rows than this
+   * @returns {Promise<Object>} Migration result with success status and details
+   * 
+   * @example
+   * // Add optional column
+   * await auth.dangerouslyAddColumn({
+   *   name: 'phoneNumber',
+   *   type: 'VARCHAR(20)',
+   *   unique: true,
+   * }, { confirmed: true });
+   * 
+   * @example
+   * // Add required column with default value
+   * await auth.dangerouslyAddColumn({
+   *   name: 'age',
+   *   type: 'INTEGER',
+   *   required: true,
+   *   defaultValue: 0,
+   * }, { confirmed: true });
+   * 
+   * @throws {Error} If not initialized, not confirmed, or validation fails
+   */
+  async dangerouslyAddColumn(fieldConfig, options = {}) {
+    const {
+      confirmed = false,
+      skipIfExists = true,
+      skipIndexCreation = false,
+      warnThreshold = 1000,
+    } = options;
+
+    // Safety check 1: Must be initialized
+    if (!this.initialized) {
+      throw new Error(
+        '❌ Cannot add column before initialization.\n\n' +
+        '   For new installations, use addField() BEFORE init():\n' +
+        '   auth.addField({ name: "fieldName", type: "VARCHAR(255)" });\n' +
+        '   await auth.init();\n'
+      );
+    }
+
+    // Safety check 2: Require explicit confirmation
+    if (!confirmed) {
+      throw new Error(
+        '\n' + '='.repeat(70) + '\n' +
+        '⚠️  DANGEROUS OPERATION - EXPLICIT CONFIRMATION REQUIRED\n' +
+        '='.repeat(70) + '\n\n' +
+        '   This operation adds a column to an existing production table.\n' +
+        '   Risks include:\n' +
+        '   • Table locks blocking ALL queries during migration\n' +
+        '   • Potential downtime on large tables (>10,000 rows)\n' +
+        '   • Failed deployments if schema changes are rolled back\n' +
+        '   • Data inconsistencies if migration is interrupted\n\n' +
+        '📋 REQUIRED STEPS BEFORE PROCEEDING:\n' +
+        '   1. ✅ Backup your database\n' +
+        '   2. ✅ Test on a database copy first\n' +
+        '   3. ✅ Schedule during low-traffic maintenance window\n' +
+        '   4. ✅ Monitor table size and server load\n\n' +
+        '📖 To proceed, pass { confirmed: true } in options:\n\n' +
+        '   auth.dangerouslyAddColumn(fieldConfig, { confirmed: true })\n\n' +
+        '='.repeat(70) + '\n'
+      );
+    }
+
+    // Validate field configuration
+    if (!fieldConfig || typeof fieldConfig !== 'object') {
+      throw new Error('Field configuration must be an object');
+    }
+
+    const { name, type, unique = false, required = false, defaultValue } = fieldConfig;
+
+    if (!name || !type) {
+      throw new Error('Field name and type are required');
+    }
+
+    if (typeof name !== 'string' || typeof type !== 'string') {
+      throw new Error('Field name and type must be strings');
+    }
+
+    // Validate field name (alphanumeric and underscore only)
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+      throw new Error(
+        `Invalid field name: "${name}"\n` +
+        '   Field names must:\n' +
+        '   • Start with a letter or underscore\n' +
+        '   • Contain only letters, numbers, and underscores\n' +
+        '   • Not contain spaces or special characters'
+      );
+    }
+
+    // Prevent overriding system fields
+    const reservedFields = [
+      'id', 'email', 'password', 'createdAt', 'updatedAt',
+      'emailVerified', 'emailVerificationToken', 'resetPasswordToken',
+      'resetPasswordExpires', 'isActive', 'firstName', 'lastName',
+    ];
+    if (reservedFields.includes(name)) {
+      throw new Error(
+        `Field name "${name}" is reserved by the system.\n` +
+        `   Reserved fields: ${reservedFields.join(', ')}`
+      );
+    }
+
+    const tableName = this.options.tables.users;
+    const isPostgres = this.options.connection.type === 'postgres';
+
+    try {
+      console.log('\n' + '='.repeat(70));
+      console.log('🚨 DANGEROUS OPERATION: ADDING COLUMN TO EXISTING TABLE');
+      console.log('='.repeat(70));
+      console.log(`📋 Table:    ${tableName}`);
+      console.log(`📋 Column:   ${name}`);
+      console.log(`📋 Type:     ${type}`);
+      console.log(`📋 Unique:   ${unique ? 'Yes' : 'No'}`);
+      console.log(`📋 Required: ${required ? 'Yes' : 'No'}`);
+      console.log(`📋 Default:  ${defaultValue !== undefined ? defaultValue : 'NULL'}`);
+      console.log('='.repeat(70) + '\n');
+
+      // Step 1: Check if column already exists
+      if (skipIfExists) {
+        console.log('🔍 Checking if column already exists...');
+        const exists = await this.db.columnExists(tableName, name);
+        if (exists) {
+          console.log(`⚠️  Column "${name}" already exists in table "${tableName}".`);
+          console.log('   Skipping migration (safe retry).\n');
+          return { 
+            success: true, 
+            skipped: true, 
+            columnName: name,
+            reason: 'Column already exists'
+          };
+        }
+        console.log('   Column does not exist. Proceeding with migration.\n');
+      }
+
+      // Step 2: Get table statistics and warn user
+      console.log('📊 Analyzing table...');
+      const rowCount = await this.db.getUserCount(tableName);
+      console.log(`   Current rows: ${rowCount.toLocaleString()}`);
+
+      if (rowCount > warnThreshold) {
+        const estimatedSeconds = Math.ceil(rowCount / 10000); // Rough estimate
+        console.log('\n' + '⚠️ '.repeat(35));
+        console.log('⚠️  WARNING: LARGE TABLE DETECTED');
+        console.log('⚠️ '.repeat(35));
+        console.log(`   Table size: ${rowCount.toLocaleString()} rows`);
+        console.log(`   Estimated lock time: ~${estimatedSeconds} seconds`);
+        console.log(`   Impact: ALL queries will be blocked during migration`);
+        console.log('⚠️ '.repeat(35));
+        console.log('\n💡 Recommendations for large tables:');
+        console.log('   • Run during scheduled maintenance window');
+        console.log('   • Alert users about potential downtime');
+        console.log('   • Monitor server CPU and memory during migration');
+        if (!isPostgres) {
+          console.log('   • Consider using pt-online-schema-change for MySQL');
+        }
+        console.log('');
+      }
+
+      // Step 3: Validate required field constraint
+      if (required && defaultValue === undefined && rowCount > 0) {
+        throw new Error(
+          `❌ Cannot add required column "${name}" without a default value.\n\n` +
+          `   The table "${tableName}" has ${rowCount.toLocaleString()} existing rows.\n` +
+          `   A required (NOT NULL) column needs a value for all existing rows.\n\n` +
+          '   Solutions:\n' +
+          `   1. Add a default value:\n` +
+          `      auth.dangerouslyAddColumn({\n` +
+          `        name: '${name}',\n` +
+          `        type: '${type}',\n` +
+          `        required: true,\n` +
+          `        defaultValue: 'your_default_value'\n` +
+          `      }, { confirmed: true });\n\n` +
+          `   2. Make the column optional:\n` +
+          `      auth.dangerouslyAddColumn({\n` +
+          `        name: '${name}',\n` +
+          `        type: '${type}',\n` +
+          `        required: false\n` +
+          `      }, { confirmed: true });\n`
+        );
+      }
+
+      // Step 4: Build ALTER TABLE statement
+      console.log('🔨 Building ALTER TABLE statement...');
+      let sql;
+
+      if (isPostgres) {
+        sql = `ALTER TABLE "${tableName}" ADD COLUMN "${name}" ${type}`;
+        
+        if (defaultValue !== undefined) {
+          sql += ` DEFAULT ${this.db.escapeValue(defaultValue)}`;
+        }
+        if (required) {
+          sql += ` NOT NULL`;
+        }
+        if (unique) {
+          sql += ` UNIQUE`;
+        }
+      } else {
+        // MySQL
+        sql = `ALTER TABLE \`${tableName}\` ADD COLUMN \`${name}\` ${type}`;
+        
+        if (defaultValue !== undefined) {
+          sql += ` DEFAULT ${this.db.escapeValue(defaultValue)}`;
+        }
+        if (required) {
+          sql += ` NOT NULL`;
+        }
+        if (unique) {
+          sql += ` UNIQUE`;
+        }
+      }
+
+      console.log(`   SQL: ${sql}\n`);
+
+      // Step 5: Execute ALTER TABLE
+      console.log('⏳ Executing migration...');
+      console.log('   (This may take several seconds for large tables)\n');
+      
+      const startTime = Date.now();
+      await this.db.query(sql);
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      
+      console.log(`✅ Column "${name}" added successfully in ${duration}s\n`);
+
+      // Step 6: Create index if needed (PostgreSQL: use CONCURRENTLY)
+      if (unique && !skipIndexCreation) {
+        console.log('🔍 Creating index for unique constraint...');
+        const indexName = `idx_${tableName}_${name}`.substring(0, 63); // PostgreSQL limit
+        
+        try {
+          if (isPostgres) {
+            // CONCURRENTLY prevents table locks in PostgreSQL
+            const indexSql = `CREATE INDEX CONCURRENTLY IF NOT EXISTS "${indexName}" ON "${tableName}" ("${name}")`;
+            await this.db.query(indexSql);
+            console.log(`   Index "${indexName}" created (non-blocking)\n`);
+          } else {
+            // MySQL
+            const indexSql = `CREATE INDEX \`${indexName}\` ON \`${tableName}\` (\`${name}\`)`;
+            await this.db.query(indexSql);
+            console.log(`   Index "${indexName}" created\n`);
+          }
+        } catch (indexError) {
+          // Non-fatal: index might already exist from UNIQUE constraint
+          console.warn(`   ⚠️  Index creation warning: ${indexError.message}\n`);
+        }
+      }
+
+      // Step 7: Add to customFields for future operations
+      this.customFields.push({
+        name,
+        type,
+        unique,
+        required,
+        defaultValue,
+      });
+
+      console.log('='.repeat(70));
+      console.log('✅ MIGRATION COMPLETED SUCCESSFULLY');
+      console.log('='.repeat(70));
+      console.log(`   Column "${name}" is now available in table "${tableName}"`);
+      console.log(`   You can now use this field in register() and updateProfile()`);
+      console.log('='.repeat(70) + '\n');
+
+      return {
+        success: true,
+        columnName: name,
+        tableName,
+        rowsAffected: rowCount,
+        duration: `${duration}s`,
+      };
+
+    } catch (error) {
+      console.error('\n' + '='.repeat(70));
+      console.error('❌ MIGRATION FAILED');
+      console.error('='.repeat(70));
+      console.error(`Error: ${error.message}\n`);
+      console.error('💡 Troubleshooting steps:');
+      console.error('   1. Check if column name is valid (alphanumeric and underscore only)');
+      console.error('   2. Verify database permissions (ALTER TABLE required)');
+      console.error('   3. Confirm SQL type is valid for your database');
+      console.error('   4. Check database logs for detailed error information');
+      console.error('   5. Ensure no other migrations are running simultaneously');
+      console.error('='.repeat(70) + '\n');
+      
+      throw new Error(`Column migration failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * ⚠️ DANGEROUS: Migrate multiple columns to existing table with transaction support
+   * 
+   * This method adds multiple columns to an already initialized database table.
+   * PostgreSQL: Uses transactions for atomic all-or-nothing operation.
+   * MySQL: Executes sequentially (transactions don't support ALTER TABLE).
+   * 
+   * USE WITH EXTREME CAUTION - Can cause extended table locks on production databases.
+   * 
+   * @param {Array<Object>} fields - Array of field configurations (same format as dangerouslyAddColumn)
+   * @param {Object} [options] - Migration options
+   * @param {boolean} [options.confirmed=false] - REQUIRED: Must be true to proceed
+   * @param {boolean} [options.useTransaction=true] - Wrap in transaction (PostgreSQL only)
+   * @param {boolean} [options.rollbackOnError=true] - Rollback on any error (PostgreSQL only)
+   * @param {boolean} [options.skipIfExists=true] - Skip columns that already exist
+   * @param {boolean} [options.skipIndexCreation=false] - Skip index creation
+   * @param {number} [options.warnThreshold=1000] - Warn if table has more rows
+   * @returns {Promise<Object>} Migration result with statistics
+   * 
+   * @example
+   * // Add multiple columns safely
+   * await auth.dangerouslyMigrateSchema([
+   *   { name: 'phoneNumber', type: 'VARCHAR(20)', unique: true },
+   *   { name: 'age', type: 'INTEGER', defaultValue: 0 },
+   *   { name: 'city', type: 'VARCHAR(100)' },
+   * ], { 
+   *   confirmed: true,
+   *   useTransaction: true  // PostgreSQL: all-or-nothing
+   * });
+   * 
+   * @throws {Error} If not initialized, not confirmed, or any migration fails
+   */
+  async dangerouslyMigrateSchema(fields, options = {}) {
+    const {
+      confirmed = false,
+      useTransaction = true,
+      rollbackOnError = true,
+      skipIfExists = true,
+      skipIndexCreation = false,
+      warnThreshold = 1000,
+    } = options;
+
+    // Safety check 1: Must be initialized
+    if (!this.initialized) {
+      throw new Error(
+        '❌ Cannot migrate schema before initialization.\n\n' +
+        '   For new installations, use addField() BEFORE init():\n' +
+        '   auth.addField({ name: "field1", type: "VARCHAR(255)" });\n' +
+        '   auth.addField({ name: "field2", type: "INTEGER" });\n' +
+        '   await auth.init();\n'
+      );
+    }
+
+    // Safety check 2: Require explicit confirmation
+    if (!confirmed) {
+      throw new Error(
+        '\n' + '='.repeat(70) + '\n' +
+        '⚠️  BULK SCHEMA MIGRATION - EXPLICIT CONFIRMATION REQUIRED\n' +
+        '='.repeat(70) + '\n\n' +
+        `   About to add ${fields.length} column(s) to existing production table.\n` +
+        '   This operation may cause extended table locks.\n\n' +
+        '   Risks include:\n' +
+        '   • Extended table locks blocking queries\n' +
+        '   • Longer downtime than single column addition\n' +
+        '   • Cannot easily reverse structure changes\n' +
+        '   • Failed rollback may leave partial changes (MySQL)\n\n' +
+        '📋 REQUIRED STEPS:\n' +
+        '   1. ✅ Backup database\n' +
+        '   2. ✅ Test on copy first\n' +
+        '   3. ✅ Schedule maintenance window\n' +
+        '   4. ✅ Alert users about downtime\n\n' +
+        '📖 To proceed, pass { confirmed: true }:\n\n' +
+        '   auth.dangerouslyMigrateSchema(fields, { confirmed: true })\n\n' +
+        '='.repeat(70) + '\n'
+      );
+    }
+
+    // Validate fields array
+    if (!Array.isArray(fields) || fields.length === 0) {
+      throw new Error('Fields must be a non-empty array of field configurations');
+    }
+
+    if (fields.length > 20) {
+      console.warn(
+        `⚠️  WARNING: Adding ${fields.length} columns in one migration.\n` +
+        '   Consider breaking this into smaller batches for safety.\n'
+      );
+    }
+
+    const isPostgres = this.options.connection.type === 'postgres';
+    const tableName = this.options.tables.users;
+    const results = {
+      success: false,
+      fieldsAdded: 0,
+      fieldsSkipped: 0,
+      fieldsProcessed: 0,
+      totalFields: fields.length,
+      duration: 0,
+      columns: [],
+    };
+
+    console.log('\n' + '='.repeat(70));
+    console.log('🚨 DANGEROUS BULK MIGRATION: ADDING MULTIPLE COLUMNS');
+    console.log('='.repeat(70));
+    console.log(`📋 Table:          ${tableName}`);
+    console.log(`📋 Columns to add: ${fields.length}`);
+    console.log(`📋 Database:       ${isPostgres ? 'PostgreSQL' : 'MySQL'}`);
+    console.log(`📋 Transaction:    ${useTransaction && isPostgres ? 'Yes (atomic)' : 'No (sequential)'}`);
+    console.log('='.repeat(70) + '\n');
+
+    const startTime = Date.now();
+
+    try {
+      if (useTransaction && isPostgres) {
+        // PostgreSQL with transaction: Atomic all-or-nothing
+        console.log('🔒 Starting transaction (all-or-nothing mode)...\n');
+        
+        const client = await this.db.getPool().connect();
+        try {
+          await client.query('BEGIN');
+          console.log('✅ Transaction started\n');
+
+          for (let i = 0; i < fields.length; i++) {
+            const field = fields[i];
+            console.log(`[${i + 1}/${fields.length}] Processing column: ${field.name}...`);
+            
+            const result = await this.dangerouslyAddColumn(field, {
+              ...options,
+              confirmed: true, // Already confirmed at bulk level
+            });
+
+            results.fieldsProcessed++;
+            if (result.skipped) {
+              results.fieldsSkipped++;
+              console.log(`   ⏭️  Skipped (already exists)\n`);
+            } else {
+              results.fieldsAdded++;
+              results.columns.push(field.name);
+              console.log(`   ✅ Added successfully\n`);
+            }
+          }
+
+          await client.query('COMMIT');
+          console.log('✅ Transaction committed - all changes applied\n');
+          results.success = true;
+
+        } catch (error) {
+          if (rollbackOnError) {
+            await client.query('ROLLBACK');
+            console.error('❌ Transaction rolled back - no changes applied\n');
+            throw new Error(
+              `Migration failed on column "${fields[results.fieldsProcessed]?.name || 'unknown'}":\n` +
+              `   ${error.message}\n` +
+              `   All changes have been rolled back.`
+            );
+          } else {
+            throw error;
+          }
+        } finally {
+          client.release();
+        }
+
+      } else {
+        // MySQL or no transaction: Sequential execution
+        if (useTransaction && !isPostgres) {
+          console.log('⚠️  MySQL does not support transactional DDL (ALTER TABLE).');
+          console.log('   Executing migrations sequentially without rollback capability.\n');
+        } else {
+          console.log('⚠️  Running without transaction - changes cannot be rolled back.\n');
+        }
+
+        for (let i = 0; i < fields.length; i++) {
+          const field = fields[i];
+          console.log(`[${i + 1}/${fields.length}] Processing column: ${field.name}...`);
+
+          try {
+            const result = await this.dangerouslyAddColumn(field, {
+              ...options,
+              confirmed: true,
+            });
+
+            results.fieldsProcessed++;
+            if (result.skipped) {
+              results.fieldsSkipped++;
+              console.log(`   ⏭️  Skipped (already exists)\n`);
+            } else {
+              results.fieldsAdded++;
+              results.columns.push(field.name);
+              console.log(`   ✅ Added successfully\n`);
+            }
+
+          } catch (error) {
+            console.error(`\n❌ Failed to add column "${field.name}": ${error.message}\n`);
+            
+            if (rollbackOnError) {
+              throw new Error(
+                `Migration failed on column "${field.name}":\n` +
+                `   ${error.message}\n` +
+                `   ${results.fieldsAdded} column(s) were added before failure.\n` +
+                `   ⚠️  WARNING: Cannot automatically rollback (no transaction support).`
+              );
+            } else {
+              console.warn(`⚠️  Continuing with remaining columns (rollbackOnError=false)...\n`);
+            }
+          }
+        }
+
+        results.success = true;
+      }
+
+      results.duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+      console.log('='.repeat(70));
+      console.log('✅ BULK MIGRATION COMPLETED');
+      console.log('='.repeat(70));
+      console.log(`   Total columns:     ${results.totalFields}`);
+      console.log(`   Added:             ${results.fieldsAdded}`);
+      console.log(`   Skipped:           ${results.fieldsSkipped}`);
+      console.log(`   Duration:          ${results.duration}s`);
+      if (results.columns.length > 0) {
+        console.log(`   New columns:       ${results.columns.join(', ')}`);
+      }
+      console.log('='.repeat(70) + '\n');
+
+      return results;
+
+    } catch (error) {
+      results.duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      
+      console.error('\n' + '='.repeat(70));
+      console.error('❌ BULK MIGRATION FAILED');
+      console.error('='.repeat(70));
+      console.error(`   Processed: ${results.fieldsProcessed}/${results.totalFields} columns`);
+      console.error(`   Added:     ${results.fieldsAdded} columns`);
+      console.error(`   Failed on: ${fields[results.fieldsProcessed]?.name || 'unknown'}`);
+      console.error(`   Duration:  ${results.duration}s`);
+      console.error(`\n   Error: ${error.message}`);
+      console.error('='.repeat(70) + '\n');
+      
+      throw error;
+    }
   }
 
   /**

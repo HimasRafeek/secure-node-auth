@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-11-20
+
+### ⚠️ New Features - Runtime Schema Migrations
+
+- **Dangerous Schema Migration Methods** - Add columns to existing databases (use with extreme caution)
+  - `dangerouslyAddColumn(fieldConfig, options)` - Add single column to existing table
+  - `dangerouslyMigrateSchema(fields, options)` - Add multiple columns at once
+  - Safety features: Confirmation required, transaction support (PostgreSQL), detailed logging
+  - ⚠️ **WARNING**: Can cause table locks and downtime on production databases
+  - Recommended: Use proper migration tools (Flyway, Liquibase) for production
+  - Best for: Development, testing, small databases with planned maintenance windows
+
+### 📚 Documentation
+
+- Added comprehensive migration guide: `docs/DANGEROUS_MIGRATIONS.md`
+- Updated README with runtime schema change examples
+- Added safety warnings and best practices
+- Included transaction examples for PostgreSQL
+
+### 🔧 Technical Details
+
+- MySQL: Uses `ALTER TABLE ADD COLUMN IF NOT EXISTS`
+- PostgreSQL: Supports transactions with `BEGIN`/`COMMIT`/`ROLLBACK`
+- Validation: Field name sanitization, type checking, duplicate prevention
+- Error handling: Graceful degradation with detailed error messages
+
 ## [1.2.1] - 2025-11-11
 
 ### 🐛 Bug Fixes
@@ -49,19 +75,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enforces minimum 32-character length for production secrets
   - Requires unique secrets for access and refresh tokens
   - Specific error codes for debugging and monitoring
-  
 - **CRITICAL: SMTP TLS Verification** - Environment-aware TLS configuration for email service
   - Production: Enforces `rejectUnauthorized=true` (rejects invalid certificates)
   - Development: Allows self-signed certificates with detailed warnings
   - Prevents man-in-the-middle attacks on email verification tokens
-  
 - **Database Maintenance Utilities** - New automated cleanup methods for all databases
   - `cleanupExpiredLoginAttempts()` - Removes old login attempt records
   - `cleanupExpiredVerificationTokens()` - Cleans up expired email verification tokens
   - `cleanupRevokedRefreshTokens()` - Removes invalidated refresh tokens
   - `performMaintenance()` - Runs all cleanup operations with detailed metrics
   - Supports both MySQL and PostgreSQL
-  
+
 ### 📚 Documentation
 
 - Added comprehensive production security checklist (3000+ lines)
@@ -104,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🎉 Major Feature: PostgreSQL Support
 
 ### Added
+
 - 🗄️ **Full PostgreSQL support** - Use PostgreSQL or MySQL with a simple config change
 - 📦 New `PostgresDatabaseManager` class for PostgreSQL operations
 - 🏭 `DatabaseFactory` to automatically choose the right database adapter
@@ -114,11 +139,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔄 Automatic SQL type conversion between MySQL and PostgreSQL
 
 ### Changed
+
 - 📖 Updated README with PostgreSQL quick start and examples
 - 🏷️ Added PostgreSQL-related keywords to package.json
 - 📝 Updated package description to mention both databases
 
 ### Technical Details
+
 - PostgreSQL uses `SERIAL` instead of `AUTO_INCREMENT`
 - Automatic conversion of MySQL types to PostgreSQL equivalents
 - Parameterized queries use `$1, $2` syntax for PostgreSQL

@@ -712,6 +712,60 @@ class PostgresDatabaseManager {
   }
 
   /**
+   * Check if a column exists in a table
+   */
+  async columnExists(tableName, columnName) {
+    this._ensureConnected();
+
+    try {
+      const result = await this.pool.query(
+        `SELECT column_name 
+         FROM information_schema.columns 
+         WHERE table_name = $1 AND column_name = $2`,
+        [tableName, columnName]
+      );
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error('[PostgresDatabaseManager] Error checking column existence:', error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Escape SQL values safely for use in queries
+   */
+  escapeValue(value) {
+    if (value === null || value === undefined) {
+      return 'NULL';
+    }
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+    if (typeof value === 'boolean') {
+      return value ? 'TRUE' : 'FALSE';
+    }
+    // Escape single quotes for PostgreSQL
+    return `'${String(value).replace(/'/g, "''")}'`;
+  }
+
+  /**
+   * Get count of users in a table
+   */
+  async getUserCount(tableName) {
+    this._ensureConnected();
+
+    try {
+      const result = await this.pool.query(
+        `SELECT COUNT(*) as count FROM "${tableName}"`
+      );
+      return parseInt(result.rows[0].count, 10);
+    } catch (error) {
+      console.error('[PostgresDatabaseManager] Error getting user count:', error.message);
+      return 0;
+    }
+  }
+
+  /**
    * Ensure connection is established
    */
   _ensureConnected() {

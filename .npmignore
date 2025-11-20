@@ -1,6 +1,7 @@
 # Development and testing files
 qa-test.js
 test-postgres.js
+test-dangerous-migration.js
 docs-server.js
 generate-docs.js
 .env.example

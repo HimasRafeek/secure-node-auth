@@ -613,6 +613,66 @@ class DatabaseManager {
   }
 
   /**
+   * Check if a column exists in a table
+   */
+  async columnExists(tableName, columnName) {
+    this._ensureConnected();
+
+    try {
+      const [rows] = await this.pool.execute(
+        `SELECT COLUMN_NAME 
+         FROM INFORMATION_SCHEMA.COLUMNS 
+         WHERE TABLE_SCHEMA = DATABASE() 
+         AND TABLE_NAME = ? 
+         AND COLUMN_NAME = ?`,
+        [tableName, columnName]
+      );
+      return rows.length > 0;
+    } catch (error) {
+      console.error('[DatabaseManager] Error checking column existence:', error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Escape SQL values safely for use in queries
+   */
+  escapeValue(value) {
+    if (value === null || value === undefined) {
+      return 'NULL';
+    }
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+    if (typeof value === 'boolean') {
+      return value ? 'TRUE' : 'FALSE';
+    }
+    // Use pool.escape for proper MySQL escaping
+    if (this.pool && this.pool.escape) {
+      return this.pool.escape(value);
+    }
+    // Fallback: escape single quotes
+    return `'${String(value).replace(/'/g, "''")}'`;
+  }
+
+  /**
+   * Get count of users in a table
+   */
+  async getUserCount(tableName) {
+    this._ensureConnected();
+
+    try {
+      const [rows] = await this.pool.execute(
+        `SELECT COUNT(*) as count FROM \`${tableName}\``
+      );
+      return parseInt(rows[0].count, 10);
+    } catch (error) {
+      console.error('[DatabaseManager] Error getting user count:', error.message);
+      return 0;
+    }
+  }
+
+  /**
    * Ensure pool is connected
    * @private
    */

@@ -180,6 +180,8 @@ start();
 
 ### Adding Custom Fields
 
+**✅ Recommended: Add fields before initialization**
+
 ```javascript
 const auth = new SecureNodeAuth({ /* config */ });
 
@@ -214,6 +216,30 @@ await auth.register({
   subscriptionTier: 'premium'
 });
 ```
+
+**⚠️ Advanced: Runtime schema changes (use with caution)**
+
+For existing databases, you can add columns after initialization using dangerous methods:
+
+```javascript
+// Already initialized
+await auth.init();
+
+// Add single column (⚠️ can cause table locks)
+await auth.dangerouslyAddColumn({
+  name: 'phoneNumber',
+  type: 'VARCHAR(20)',
+  unique: true,
+}, { confirmed: true });
+
+// Add multiple columns with transaction (PostgreSQL)
+await auth.dangerouslyMigrateSchema([
+  { name: 'age', type: 'INTEGER', defaultValue: 0 },
+  { name: 'city', type: 'VARCHAR(100)' },
+], { confirmed: true, useTransaction: true });
+```
+
+**📖 [Complete Migration Guide](docs/DANGEROUS_MIGRATIONS.md)** - Safety tips, examples, and best practices.
 
 ### Using Hooks
 
@@ -570,6 +596,7 @@ console.log('Active users:', rows[0].total);
 - 🗄️ [PostgreSQL Integration Guide](docs/POSTGRES_GUIDE.md) - Complete guide for PostgreSQL, migration, and Docker setup
 - ⚡ [Fastify Integration Guide](docs/FASTIFY_GUIDE.md) - Complete guide for using with Fastify framework
 - 📖 [Accessing User-Specific Data](docs/USER_DATA_ACCESS.md) - Complete guide on protecting routes and accessing user's posts, orders, etc.
+- ⚠️ [Dangerous Migrations Guide](docs/DANGEROUS_MIGRATIONS.md) - **Runtime schema changes for existing databases (use with caution)**
 - 🔄 [Authentication Flow Diagram](docs/FLOW_DIAGRAM.md) - Visual guide showing how authentication works
 - ⚡ [Quick Reference](docs/QUICK_REFERENCE_USER_DATA.md) - Common patterns cheat sheet
 - 🚀 [Getting Started](docs/GETTING_STARTED.md) - Step-by-step setup guide
