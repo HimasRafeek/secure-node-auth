@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-11-20
+
+### 🐛 Bug Fixes
+
+- **Fixed database connection timeout issues (ETIMEDOUT)**
+  - Added connection timeout defaults (10 seconds)
+  - Added retry logic with exponential backoff (3 attempts by default)
+  - Added helpful error messages for common connection issues
+  - Added keepAlive support for stable long-running connections
+
+### 📝 Configuration
+
+- New connection options available:
+  - `connectTimeout` - Connection timeout in milliseconds (default: 10000)
+  - `acquireTimeout` - Connection acquire timeout (default: 10000)
+  - `timeout` - Query timeout (default: 10000)
+  - `retryAttempts` - Number of connection retry attempts (default: 3)
+  - `retryDelay` - Delay between retries in milliseconds (default: 1000)
+  - `enableKeepAlive` - Enable TCP keepalive (default: true)
+  - `keepAliveInitialDelay` - Initial keepalive delay (default: 0)
+
+### 📚 Documentation
+
+- Added comprehensive troubleshooting section in README
+- Added connection timeout configuration examples
+- Added solutions for common MySQL connection errors (ETIMEDOUT, ECONNREFUSED, ER_ACCESS_DENIED_ERROR)
+- Updated TypeScript definitions with new connection options
+
 ## [1.4.0] - 2025-11-20
 
 ### ✨ New Features - 6-Digit Code Authentication
