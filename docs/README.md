@@ -70,9 +70,10 @@ That's it! You now have a complete authentication system with:
 Choose between MySQL or PostgreSQL by setting the `type` option:
 
 ### MySQL (Default)
+
 ```javascript
 const auth = new SecureNodeAuth({
-  type: 'mysql',  // or omit this (mysql is default)
+  type: 'mysql', // or omit this (mysql is default)
   connection: {
     host: 'localhost',
     user: 'root',
@@ -83,6 +84,7 @@ const auth = new SecureNodeAuth({
 ```
 
 ### PostgreSQL
+
 ```javascript
 const auth = new SecureNodeAuth({
   type: 'postgres',
@@ -183,17 +185,23 @@ For existing databases, you can add columns after initialization:
 await auth.init();
 
 // Add single column (⚠️ can cause table locks)
-await auth.dangerouslyAddColumn({
-  name: 'phoneNumber',
-  type: 'VARCHAR(20)',
-  unique: true,
-}, { confirmed: true });
+await auth.dangerouslyAddColumn(
+  {
+    name: 'phoneNumber',
+    type: 'VARCHAR(20)',
+    unique: true,
+  },
+  { confirmed: true }
+);
 
 // Add multiple columns
-await auth.dangerouslyMigrateSchema([
-  { name: 'age', type: 'INTEGER', defaultValue: 0 },
-  { name: 'city', type: 'VARCHAR(100)' },
-], { confirmed: true });
+await auth.dangerouslyMigrateSchema(
+  [
+    { name: 'age', type: 'INTEGER', defaultValue: 0 },
+    { name: 'city', type: 'VARCHAR(100)' },
+  ],
+  { confirmed: true }
+);
 ```
 
 **📖 See [DANGEROUS_MIGRATIONS.md](DANGEROUS_MIGRATIONS.md) for complete guide.**
@@ -367,6 +375,7 @@ POST /auth/login
 ## 📋 Complete API Methods
 
 ### Core Authentication
+
 - `await auth.init()` - Initialize system and create tables
 - `await auth.register(userData)` - Register new user
 - `await auth.login(email, password)` - Login and get tokens
@@ -376,6 +385,7 @@ POST /auth/login
 - `await auth.verifyAccessToken(token)` - Verify JWT token
 
 ### User Management
+
 - `await auth.getUserById(userId)` - Get user by ID
 - `await auth.getUserByEmail(email)` - Get user by email
 - `await auth.updateUser(userId, updates)` - Update user data
@@ -385,16 +395,19 @@ POST /auth/login
 - `await auth.isAccountLocked(email)` - Check if account locked
 
 ### Email Verification
+
 - `await auth.sendVerificationEmail(email, url)` - Send verification email
 - `await auth.verifyEmail(token)` - Verify email with token
 - `await auth.resendVerificationEmail(email, url)` - Resend verification
 - `await auth.isEmailVerified(userId)` - Check if email verified
 
 ### Password Reset
+
 - `await auth.sendPasswordResetEmail(email, url)` - Send reset email
 - `await auth.resetPassword(token, newPassword)` - Reset password
 
 ### Database Maintenance
+
 - `await auth.cleanupExpiredTokens()` - Clean expired tokens
 - `await auth.cleanupExpiredLoginAttempts(days)` - Clean old attempts
 - `await auth.cleanupRevokedRefreshTokens(days)` - Clean revoked tokens
@@ -402,11 +415,13 @@ POST /auth/login
 - `auth.getPool()` - Get raw database pool
 
 ### Schema Customization
+
 - `auth.addField(config)` - Add field before init
 - `await auth.dangerouslyAddColumn(config, options)` - Add column at runtime
 - `await auth.dangerouslyMigrateSchema(fields, options)` - Batch migration
 
 ### Hooks & Integration
+
 - `auth.on(event, callback)` - Register lifecycle hooks
 - `auth.router(options)` - Get Express/Fastify router
 - `auth.middleware()` - Get auth middleware
