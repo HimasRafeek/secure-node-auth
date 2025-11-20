@@ -81,6 +81,7 @@ class PostgresDatabaseManager {
           // Convert MySQL types to PostgreSQL types
           let pgType = this._convertMySQLTypeToPG(field.type);
 
+          // Quote field name to preserve case (especially for camelCase)
           let sql = `"${field.name}" ${pgType}`;
           if (field.required) sql += ' NOT NULL';
 
@@ -530,10 +531,150 @@ class PostgresDatabaseManager {
   }
 
   /**
-   * Get the connection pool
+   * Get the connection pool with execute wrapper
    */
   getPool() {
-    return this.pool;
+    // Wrap the pool to add execute method to connections
+    const originalConnect = this.pool.connect.bind(this.pool);
+    const pool = this.pool;
+
+    return {
+      ...pool,
+      connect: async () => {
+        const client = await originalConnect();
+        // Add execute method to client for MySQL compatibility
+        if (!client.execute) {
+          client.execute = async (sql, params = []) => {
+            // Convert MySQL ? placeholders to PostgreSQL $1, $2, etc.
+            let paramIndex = 1;
+            let pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
+
+            // Convert MySQL backticks to PostgreSQL double quotes
+            pgSql = pgSql.replace(/`/g, '"');
+
+            // Quote camelCase column names to preserve case in PostgreSQL
+            // Match patterns like: columnName, table.columnName, AS columnName
+            // But skip if already quoted (negative lookbehind/lookahead for double quotes)
+            pgSql = pgSql.replace(/(?<!")\b([a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*)\b(?!")/g, '"$1"');
+
+            const result = await client.query(pgSql, params);
+
+            // Add affectedRows property for MySQL compatibility
+            const rows = result.rows;
+            rows.affectedRows = result.rowCount;
+            rows.insertId = result.rows[0]?.id; // For INSERT queries
+
+            // Return in MySQL format: [rows, fields]
+            return [rows, result.fields];
+          };
+        }
+        // Add beginTransaction method for MySQL compatibility
+        if (!client.beginTransaction) {
+          client.beginTransaction = async () => {
+            await client.query('BEGIN');
+          };
+        }
+        // Add commit method for MySQL compatibility
+        if (!client.commit) {
+          client.commit = async () => {
+            await client.query('COMMIT');
+          };
+        }
+        // Add rollback method for MySQL compatibility
+        if (!client.rollback) {
+          client.rollback = async () => {
+            await client.query('ROLLBACK');
+          };
+        }
+        return client;
+      },
+      // Add getConnection as alias for connect (MySQL compatibility)
+      getConnection: async () => {
+        const client = await originalConnect();
+        // Add execute method to client for MySQL compatibility
+        if (!client.execute) {
+          client.execute = async (sql, params = []) => {
+            // Convert MySQL ? placeholders to PostgreSQL $1, $2, etc.
+            let paramIndex = 1;
+            let pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
+
+            // Convert MySQL backticks to PostgreSQL double quotes
+            pgSql = pgSql.replace(/`/g, '"');
+
+            // Quote camelCase column names to preserve case in PostgreSQL
+            // Match patterns like: columnName, table.columnName, AS columnName
+            // But skip if already quoted (negative lookbehind/lookahead for double quotes)
+            pgSql = pgSql.replace(/(?<!")\b([a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*)\b(?!")/g, '"$1"');
+
+            const result = await client.query(pgSql, params);
+
+            // Add affectedRows property for MySQL compatibility
+            const rows = result.rows;
+            rows.affectedRows = result.rowCount;
+            rows.insertId = result.rows[0]?.id; // For INSERT queries
+
+            // Return in MySQL format: [rows, fields]
+            return [rows, result.fields];
+          };
+        }
+        // Add beginTransaction method for MySQL compatibility
+        if (!client.beginTransaction) {
+          client.beginTransaction = async () => {
+            await client.query('BEGIN');
+          };
+        }
+        // Add commit method for MySQL compatibility
+        if (!client.commit) {
+          client.commit = async () => {
+            await client.query('COMMIT');
+          };
+        }
+        // Add rollback method for MySQL compatibility
+        if (!client.rollback) {
+          client.rollback = async () => {
+            await client.query('ROLLBACK');
+          };
+        }
+        return client;
+      },
+      query: pool.query.bind(pool),
+      end: pool.end.bind(pool),
+      escape: (value) => {
+        if (value === null || value === undefined) return 'NULL';
+        if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
+        if (typeof value === 'number') return value.toString();
+        if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
+        return `'${String(value).replace(/'/g, "''")}'`;
+      },
+    };
+  }
+
+  /**
+   * Execute a query (PostgreSQL adapter - maps to query with $1, $2 placeholders)
+   * This method provides a consistent interface for both MySQL and PostgreSQL
+   */
+  async execute(sql, params = []) {
+    // Convert MySQL ? placeholders to PostgreSQL $1, $2, etc.
+    let paramIndex = 1;
+    let pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
+
+    // Convert MySQL backticks to PostgreSQL double quotes
+    pgSql = pgSql.replace(/`/g, '"');
+
+    // Quote camelCase column names to preserve case in PostgreSQL
+    // Match patterns like: columnName, table.columnName, AS columnName
+    // But skip if already quoted (negative lookbehind/lookahead for double quotes)
+    pgSql = pgSql.replace(/(?<!")\b([a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*)\b(?!")/g, '"$1"');
+
+    const result = await this.pool.query(pgSql, params);
+
+    // Add affectedRows property for MySQL compatibility
+    const rows = result.rows;
+    rows.affectedRows = result.rowCount;
+    rows.insertId = result.rows[0]?.id; // For INSERT queries
+
+    // Return in MySQL format: [rows, fields]
+    return [rows, result.fields];
   }
 
   /**
@@ -755,9 +896,7 @@ class PostgresDatabaseManager {
     this._ensureConnected();
 
     try {
-      const result = await this.pool.query(
-        `SELECT COUNT(*) as count FROM "${tableName}"`
-      );
+      const result = await this.pool.query(`SELECT COUNT(*) as count FROM "${tableName}"`);
       return parseInt(result.rows[0].count, 10);
     } catch (error) {
       console.error('[PostgresDatabaseManager] Error getting user count:', error.message);

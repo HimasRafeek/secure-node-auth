@@ -27,7 +27,7 @@ app.get('/api/posts/my-posts', auth.middleware(), async (req, res) => {
     const userId = req.user.userId;  // 👈 Get authenticated user's ID
     
     // Query posts for this user
-    const pool = auth.db.getPool();
+    const pool = auth.getPool();
     const [posts] = await pool.execute(
       'SELECT * FROM posts WHERE userId = ? ORDER BY createdAt DESC',
       [userId]
@@ -59,7 +59,7 @@ app.post('/api/posts', auth.middleware(), async (req, res) => {
     const userId = req.user.userId;  // 👈 Automatically get user ID
     const { title, content } = req.body;
     
-    const pool = auth.db.getPool();
+    const pool = auth.getPool();
     const [result] = await pool.execute(
       'INSERT INTO posts (userId, title, content) VALUES (?, ?, ?)',
       [userId, title, content]
@@ -99,7 +99,7 @@ app.patch('/api/posts/:postId', auth.middleware(), async (req, res) => {
     const postId = req.params.postId;
     const { title, content } = req.body;
     
-    const pool = auth.db.getPool();
+    const pool = auth.getPool();
     
     // 🔒 Security: Check if post belongs to user
     const [posts] = await pool.execute(
@@ -138,7 +138,7 @@ app.delete('/api/posts/:postId', auth.middleware(), async (req, res) => {
     const userId = req.user.userId;
     const postId = req.params.postId;
     
-    const pool = auth.db.getPool();
+    const pool = auth.getPool();
     
     // 🔒 Delete only if userId matches
     const [result] = await pool.execute(
@@ -170,7 +170,7 @@ app.get('/api/profile/dashboard', auth.middleware(), async (req, res) => {
     const user = await auth.getUserById(userId);
     
     // Get user's statistics
-    const pool = auth.db.getPool();
+    const pool = auth.getPool();
     
     const [postStats] = await pool.execute(
       'SELECT COUNT(*) as total FROM posts WHERE userId = ?',
@@ -390,7 +390,7 @@ const optionalAuth = async (req, res, next) => {
 
 // Use it
 app.get('/api/posts', optionalAuth, async (req, res) => {
-  const pool = auth.db.getPool();
+  const pool = auth.getPool();
   
   if (req.user) {
     // Show user's posts + public posts
@@ -437,7 +437,7 @@ app.get('/api/admin/all-posts',
   auth.middleware(), 
   requireRole('admin'),
   async (req, res) => {
-    const pool = auth.db.getPool();
+    const pool = auth.getPool();
     const [posts] = await pool.execute('SELECT * FROM posts');
     res.json({ posts });
   }

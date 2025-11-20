@@ -684,7 +684,7 @@ cron.schedule('0 0 * * *', async () => {
 
 ```javascript
 // Get raw database pool for custom queries
-const pool = auth.db.getPool();
+const pool = auth.getPool();
 
 const [rows] = await pool.execute(
   'SELECT COUNT(*) as total FROM secure_auth_users WHERE isActive = ?',

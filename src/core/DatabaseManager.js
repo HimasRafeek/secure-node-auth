@@ -502,6 +502,15 @@ class DatabaseManager {
   }
 
   /**
+   * Execute a query (MySQL compatible - uses execute with placeholders)
+   * This method provides a consistent interface for both MySQL and PostgreSQL
+   */
+  async execute(sql, params = []) {
+    this._ensureConnected();
+    return await this.pool.execute(sql, params);
+  }
+
+  /**
    * Clean up expired login attempt records
    * MAINTENANCE: Should be called periodically (e.g., daily via cron job)
    * Removes login records older than specified days to prevent table bloat

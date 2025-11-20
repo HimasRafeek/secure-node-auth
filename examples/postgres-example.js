@@ -102,7 +102,7 @@ async function startServer() {
     // Example: Direct PostgreSQL query
     app.get('/api/stats', auth.middleware(), async (req, res) => {
       try {
-        const pool = auth.db.getPool();
+        const pool = auth.getPool();
 
         // PostgreSQL uses $1, $2 for parameterized queries
         const result = await pool.query(

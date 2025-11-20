@@ -255,7 +255,7 @@ class SecureNodeAuth {
       console.log('[SecureNodeAuth] ✓ Indexes created');
 
       // Initialize email service if SMTP configured
-      this.emailService = new EmailService(this.options, this.db.getPool(), this.options.tables);
+      this.emailService = new EmailService(this.options, this.db, this.options.tables);
       if (this.options.smtp && this.options.smtp.host) {
         console.log('[SecureNodeAuth] ✓ Email service initialized');
       }
@@ -1497,8 +1497,7 @@ class SecureNodeAuth {
     email = email.trim().toLowerCase();
 
     // Find user
-    const pool = this.db.getPool();
-    const [users] = await pool.execute(
+    const [users] = await this.db.execute(
       `SELECT id, email, emailVerified FROM \`${this.options.tables.users}\` WHERE email = ? LIMIT 1`,
       [email]
     );
@@ -1542,8 +1541,7 @@ class SecureNodeAuth {
     email = email.trim().toLowerCase();
 
     // Find user
-    const pool = this.db.getPool();
-    const [users] = await pool.execute(
+    const [users] = await this.db.execute(
       `SELECT id, email, emailVerified FROM \`${this.options.tables.users}\` WHERE email = ? LIMIT 1`,
       [email]
     );
@@ -1559,7 +1557,7 @@ class SecureNodeAuth {
     }
 
     // Delete old codes for this user to prevent code reuse
-    await pool.execute(
+    await this.db.execute(
       `DELETE FROM \`${this.options.tables.verificationTokens}\` WHERE userId = ?`,
       [user.id]
     );
@@ -1849,8 +1847,7 @@ class SecureNodeAuth {
   async isEmailVerified(userId) {
     this._ensureInitialized();
 
-    const pool = this.db.getPool();
-    const [users] = await pool.execute(
+    const [users] = await this.db.execute(
       `SELECT emailVerified FROM \`${this.options.tables.users}\` WHERE id = ? LIMIT 1`,
       [userId]
     );

@@ -31,22 +31,22 @@ auth.init()
       try {
         // req.user contains: { userId, email, iat, exp }
         const userId = req.user.userId;
-        
+
         // Get posts from database (example query)
-        const pool = auth.db.getPool();
+        const pool = auth.getPool();
         const [posts] = await pool.execute(
           'SELECT * FROM posts WHERE userId = ? ORDER BY createdAt DESC',
           [userId]
         );
-        
+
         res.json({
           success: true,
           user: {
             id: userId,
-            email: req.user.email
+            email: req.user.email,
           },
           posts: posts,
-          totalPosts: posts.length
+          totalPosts: posts.length,
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -60,18 +60,18 @@ auth.init()
       try {
         const userId = req.user.userId;
         const { title, content } = req.body;
-        
+
         if (!title || !content) {
           return res.status(400).json({ error: 'Title and content required' });
         }
-        
+
         // Insert post
-        const pool = auth.db.getPool();
+        const pool = auth.getPool();
         const [result] = await pool.execute(
           'INSERT INTO posts (userId, title, content, createdAt) VALUES (?, ?, ?, NOW())',
           [userId, title, content]
         );
-        
+
         res.status(201).json({
           success: true,
           message: 'Post created successfully',
@@ -79,8 +79,8 @@ auth.init()
             id: result.insertId,
             userId,
             title,
-            content
-          }
+            content,
+          },
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -95,30 +95,30 @@ auth.init()
         const userId = req.user.userId;
         const postId = req.params.postId;
         const { title, content } = req.body;
-        
-        const pool = auth.db.getPool();
-        
+
+        const pool = auth.getPool();
+
         // Check if post belongs to user
-        const [posts] = await pool.execute(
-          'SELECT * FROM posts WHERE id = ? AND userId = ?',
-          [postId, userId]
-        );
-        
+        const [posts] = await pool.execute('SELECT * FROM posts WHERE id = ? AND userId = ?', [
+          postId,
+          userId,
+        ]);
+
         if (posts.length === 0) {
-          return res.status(404).json({ 
-            error: 'Post not found or you do not have permission to edit it' 
+          return res.status(404).json({
+            error: 'Post not found or you do not have permission to edit it',
           });
         }
-        
+
         // Update post
         await pool.execute(
           'UPDATE posts SET title = ?, content = ?, updatedAt = NOW() WHERE id = ? AND userId = ?',
           [title || posts[0].title, content || posts[0].content, postId, userId]
         );
-        
+
         res.json({
           success: true,
-          message: 'Post updated successfully'
+          message: 'Post updated successfully',
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -132,24 +132,24 @@ auth.init()
       try {
         const userId = req.user.userId;
         const postId = req.params.postId;
-        
-        const pool = auth.db.getPool();
-        
+
+        const pool = auth.getPool();
+
         // Delete only if post belongs to user
-        const [result] = await pool.execute(
-          'DELETE FROM posts WHERE id = ? AND userId = ?',
-          [postId, userId]
-        );
-        
+        const [result] = await pool.execute('DELETE FROM posts WHERE id = ? AND userId = ?', [
+          postId,
+          userId,
+        ]);
+
         if (result.affectedRows === 0) {
-          return res.status(404).json({ 
-            error: 'Post not found or you do not have permission to delete it' 
+          return res.status(404).json({
+            error: 'Post not found or you do not have permission to delete it',
           });
         }
-        
+
         res.json({
           success: true,
-          message: 'Post deleted successfully'
+          message: 'Post deleted successfully',
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -162,25 +162,25 @@ auth.init()
     app.get('/api/profile/stats', auth.middleware(), async (req, res) => {
       try {
         const userId = req.user.userId;
-        
+
         // Get user details
         const user = await auth.getUserById(userId);
-        
+
         // Get post count
-        const pool = auth.db.getPool();
+        const pool = auth.getPool();
         const [result] = await pool.execute(
           'SELECT COUNT(*) as postCount FROM posts WHERE userId = ?',
           [userId]
         );
-        
+
         res.json({
           success: true,
           profile: {
             ...user,
             stats: {
-              totalPosts: result[0].postCount
-            }
-          }
+              totalPosts: result[0].postCount,
+            },
+          },
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -192,8 +192,8 @@ auth.init()
     // ==========================================
     app.get('/api/posts/public', async (req, res) => {
       try {
-        const pool = auth.db.getPool();
-        
+        const pool = auth.getPool();
+
         // Get all posts with user information (JOIN)
         const [posts] = await pool.execute(`
           SELECT 
@@ -209,10 +209,10 @@ auth.init()
           ORDER BY p.createdAt DESC
           LIMIT 50
         `);
-        
+
         res.json({
           success: true,
-          posts
+          posts,
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -225,28 +225,28 @@ auth.init()
     app.get('/api/users/:userId/posts', async (req, res) => {
       try {
         const userId = req.params.userId;
-        
-        const pool = auth.db.getPool();
+
+        const pool = auth.getPool();
         const [posts] = await pool.execute(
           'SELECT id, title, content, createdAt FROM posts WHERE userId = ? ORDER BY createdAt DESC',
           [userId]
         );
-        
+
         // Get user info (without password)
         const user = await auth.getUserById(userId);
-        
+
         if (!user) {
           return res.status(404).json({ error: 'User not found' });
         }
-        
+
         res.json({
           success: true,
           user: {
             id: user.id,
             firstName: user.firstName,
-            lastName: user.lastName
+            lastName: user.lastName,
           },
-          posts
+          posts,
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -259,12 +259,12 @@ auth.init()
     app.get('/api/posts/search', async (req, res) => {
       try {
         const searchQuery = req.query.q;
-        
+
         if (!searchQuery) {
           return res.status(400).json({ error: 'Search query required' });
         }
-        
-        const pool = auth.db.getPool();
+
+        const pool = auth.getPool();
         const [posts] = await pool.execute(
           `SELECT p.*, u.firstName, u.lastName 
            FROM posts p
@@ -273,12 +273,12 @@ auth.init()
            ORDER BY p.createdAt DESC`,
           [`%${searchQuery}%`, `%${searchQuery}%`]
         );
-        
+
         res.json({
           success: true,
           query: searchQuery,
           results: posts,
-          count: posts.length
+          count: posts.length,
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -290,7 +290,7 @@ auth.init()
     // ==========================================
     async function createPostsTable() {
       try {
-        const pool = auth.db.getPool();
+        const pool = auth.getPool();
         await pool.execute(`
           CREATE TABLE IF NOT EXISTS posts (
             id INT AUTO_INCREMENT PRIMARY KEY,

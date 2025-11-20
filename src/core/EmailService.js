@@ -5,9 +5,9 @@ const crypto = require('crypto');
  * EmailService - Handles all email operations (verification, password reset, etc.)
  */
 class EmailService {
-  constructor(config, dbPool, tables) {
+  constructor(config, dbManager, tables) {
     this.config = config;
-    this.dbPool = dbPool;
+    this.dbManager = dbManager;
     this.tables = tables;
     this.transporter = null;
 
@@ -134,7 +134,7 @@ class EmailService {
       const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
       // Store token in database
-      await this.dbPool.execute(
+      await this.dbManager.execute(
         `INSERT INTO \`${this.tables.verificationTokens}\` (userId, token, expiresAt) VALUES (?, ?, ?)`,
         [userId, token, expiresAt]
       );
@@ -189,7 +189,7 @@ class EmailService {
       const expiresAt = Date.now() + expiresInMinutes * 60 * 1000;
 
       // Store code in database (using token field)
-      await this.dbPool.execute(
+      await this.dbManager.execute(
         `INSERT INTO \`${this.tables.verificationTokens}\` (userId, token, expiresAt) VALUES (?, ?, ?)`,
         [userId, code, expiresAt]
       );
@@ -224,7 +224,7 @@ class EmailService {
    * Verify email with token
    */
   async verifyEmail(token) {
-    const connection = await this.dbPool.getConnection();
+    const connection = await this.dbManager.getPool().getConnection();
 
     try {
       await connection.beginTransaction();
@@ -289,7 +289,7 @@ class EmailService {
    * @returns {Promise<Object>} Verification result
    */
   async verifyCode(email, code) {
-    const connection = await this.dbPool.getConnection();
+    const connection = await this.dbManager.getPool().getConnection();
 
     try {
       await connection.beginTransaction();
@@ -369,7 +369,7 @@ class EmailService {
   async resendVerificationEmail(email, verificationUrl) {
     try {
       // Find user by email
-      const [users] = await this.dbPool.execute(
+      const [users] = await this.dbManager.execute(
         `SELECT id, email, emailVerified FROM \`${this.tables.users}\` WHERE email = ? LIMIT 1`,
         [email]
       );
@@ -385,7 +385,7 @@ class EmailService {
       }
 
       // Delete old tokens for this user
-      await this.dbPool.execute(
+      await this.dbManager.execute(
         `DELETE FROM \`${this.tables.verificationTokens}\` WHERE userId = ?`,
         [user.id]
       );
@@ -408,7 +408,7 @@ class EmailService {
 
     try {
       // Find user
-      const [users] = await this.dbPool.execute(
+      const [users] = await this.dbManager.execute(
         `SELECT id FROM \`${this.tables.users}\` WHERE email = ? LIMIT 1`,
         [email]
       );
@@ -425,7 +425,7 @@ class EmailService {
       const expiresAt = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
 
       // Store token in users table
-      await this.dbPool.execute(
+      await this.dbManager.execute(
         `UPDATE \`${this.tables.users}\` 
          SET resetPasswordToken = ?, resetPasswordExpires = ? 
          WHERE id = ?`,
@@ -479,7 +479,7 @@ class EmailService {
 
     try {
       // Find user
-      const [users] = await this.dbPool.execute(
+      const [users] = await this.dbManager.execute(
         `SELECT id FROM \`${this.tables.users}\` WHERE email = ? LIMIT 1`,
         [email]
       );
@@ -496,7 +496,7 @@ class EmailService {
       const expiresAt = Date.now() + expiresInMinutes * 60 * 1000;
 
       // Store code in users table
-      await this.dbPool.execute(
+      await this.dbManager.execute(
         `UPDATE \`${this.tables.users}\` 
          SET resetPasswordToken = ?, resetPasswordExpires = ? 
          WHERE id = ?`,
@@ -542,8 +542,8 @@ class EmailService {
    * @param {string} newPassword - New password (hashed by caller)
    * @returns {Promise<Object>} Reset result
    */
-  async resetPasswordWithCode(email, code, newPassword) {
-    const connection = await this.dbPool.getConnection();
+  async resetPasswordWithCode(email, code, newPasswordHash) {
+    const connection = await this.dbManager.getPool().getConnection();
 
     try {
       await connection.beginTransaction();
@@ -579,7 +579,7 @@ class EmailService {
         `UPDATE \`${this.tables.users}\` 
          SET password = ?, resetPasswordToken = NULL, resetPasswordExpires = NULL 
          WHERE id = ?`,
-        [newPassword, user.id]
+        [newPasswordHash, user.id]
       );
 
       // Revoke all refresh tokens for this user (force re-login)
@@ -616,13 +616,13 @@ class EmailService {
       const now = Date.now();
 
       // Delete expired verification tokens
-      const [result] = await this.dbPool.execute(
+      const [result] = await this.dbManager.execute(
         `DELETE FROM \`${this.tables.verificationTokens}\` WHERE expiresAt < ?`,
         [now]
       );
 
       // Clear expired reset tokens from users table
-      await this.dbPool.execute(
+      await this.dbManager.execute(
         `UPDATE \`${this.tables.users}\` 
          SET resetPasswordToken = NULL, resetPasswordExpires = NULL 
          WHERE resetPasswordExpires < ?`,
@@ -852,3 +852,4 @@ class EmailService {
 }
 
 module.exports = EmailService;
+

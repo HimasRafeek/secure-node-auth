@@ -634,7 +634,7 @@ console.log('Test email sent!');
 
 ```javascript
 // Get token from database
-const [tokens] = await auth.db.pool.execute(
+const [tokens] = await auth.getPool().execute(
   'SELECT token FROM secure_auth_verification_tokens WHERE userId = ? LIMIT 1',
   [userId]
 );

@@ -370,7 +370,7 @@ await auth.register({
 
 ```javascript
 // Get PostgreSQL pool for custom queries
-const pool = auth.db.getPool();
+const pool = auth.getPool();
 
 // Example: Custom query with PostgreSQL syntax
 const result = await pool.query(
