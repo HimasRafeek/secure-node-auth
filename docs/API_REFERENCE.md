@@ -126,14 +126,35 @@ await auth.init();
 await auth.register(userData);
 await auth.login(email, password);
 await auth.getUserById(userId);
+await auth.getUserByEmail(email);
 await auth.updateUser(userId, updates);
+await auth.updateProfile(userId, updates);  // Alias for updateUser
 await auth.changePassword(userId, oldPass, newPass);
+await auth.isAccountLocked(email);
+await auth.getUserCount();
 
 // Token Management
 await auth.refreshToken(refreshToken);
 await auth.verifyAccessToken(token);
 await auth.logout(refreshToken);
 await auth.logoutAll(userId);
+
+// Email Verification
+await auth.sendVerificationEmail(email, verificationUrl);
+await auth.verifyEmail(token);
+await auth.resendVerificationEmail(email, verificationUrl);
+await auth.isEmailVerified(userId);
+
+// Password Reset
+await auth.sendPasswordResetEmail(email, resetUrl);
+await auth.resetPassword(token, newPassword);
+
+// Database Maintenance & Utilities
+await auth.cleanupExpiredTokens();
+await auth.cleanupExpiredLoginAttempts(daysToKeep);
+await auth.cleanupRevokedRefreshTokens(daysToKeep);
+await auth.performMaintenance(options);
+auth.getPool();  // Get raw database pool
 
 // Customization
 auth.addField(fieldConfig);
@@ -413,6 +434,293 @@ const decoded = await auth.verifyAccessToken(tokens.accessToken);
 ✅ Time saving (hours → minutes)
 ✅ Maintained & updated
 ✅ Comprehensive documentation
+
+## 📋 Complete Method Reference
+
+### Core Authentication Methods
+
+#### `async init()`
+Initialize the authentication system. Creates tables, indexes, and sets up the database.
+```javascript
+await auth.init();
+```
+
+#### `async register(userData)`
+Register a new user with email and password.
+```javascript
+const result = await auth.register({
+  email: 'user@example.com',
+  password: 'SecurePass123!',
+  firstName: 'John',
+  lastName: 'Doe'
+});
+// Returns: { user, tokens: { accessToken, refreshToken, expiresIn } }
+```
+
+#### `async login(email, password)`
+Login user with email and password.
+```javascript
+const result = await auth.login('user@example.com', 'SecurePass123!');
+// Returns: { user, tokens: { accessToken, refreshToken, expiresIn } }
+```
+
+#### `async refreshToken(refreshToken)`
+Get a new access token using a refresh token.
+```javascript
+const { accessToken } = await auth.refreshToken(refreshToken);
+```
+
+#### `async logout(refreshToken)`
+Logout from a single session by revoking the refresh token.
+```javascript
+await auth.logout(refreshToken);
+```
+
+#### `async logoutAll(userId)`
+Logout from all devices by revoking all user's refresh tokens.
+```javascript
+await auth.logoutAll(userId);
+```
+
+#### `async verifyAccessToken(token)`
+Verify and decode a JWT access token.
+```javascript
+const decoded = await auth.verifyAccessToken(token);
+// Returns: { userId, email, iat, exp }
+```
+
+### User Management Methods
+
+#### `async getUserById(userId)`
+Get user by ID (password excluded).
+```javascript
+const user = await auth.getUserById(123);
+```
+
+#### `async getUserByEmail(email)`
+Get user by email address (password excluded).
+```javascript
+const user = await auth.getUserByEmail('user@example.com');
+```
+
+#### `async updateUser(userId, updates)`
+Update user profile data.
+```javascript
+await auth.updateUser(userId, {
+  firstName: 'Jane',
+  phoneNumber: '+1234567890'
+});
+```
+
+#### `async updateProfile(userId, updates)`
+Alias for `updateUser()` with clearer naming.
+```javascript
+await auth.updateProfile(userId, { firstName: 'Jane' });
+```
+
+#### `async changePassword(userId, oldPassword, newPassword)`
+Change user password (requires current password).
+```javascript
+await auth.changePassword(userId, 'OldPass123!', 'NewPass456!');
+```
+
+#### `async getUserCount()`
+Get total number of users (for analytics/dashboards).
+```javascript
+const count = await auth.getUserCount();
+console.log(`Total users: ${count}`);
+```
+
+#### `async isAccountLocked(email)`
+Check if account is temporarily locked due to failed login attempts.
+```javascript
+const isLocked = await auth.isAccountLocked('user@example.com');
+if (isLocked) {
+  console.log('Account is locked. Try again in 15 minutes.');
+}
+```
+
+### Email Verification Methods
+
+#### `async sendVerificationEmail(email, verificationUrl)`
+Send email verification link to user.
+```javascript
+await auth.sendVerificationEmail(
+  'user@example.com',
+  'https://myapp.com/verify-email'
+);
+```
+
+#### `async verifyEmail(token)`
+Verify user's email with token from verification link.
+```javascript
+const result = await auth.verifyEmail(tokenFromURL);
+// Returns: { success: true, userId, message }
+```
+
+#### `async resendVerificationEmail(email, verificationUrl)`
+Resend verification email (if previous one expired or not received).
+```javascript
+await auth.resendVerificationEmail(
+  'user@example.com',
+  'https://myapp.com/verify-email'
+);
+```
+
+#### `async isEmailVerified(userId)`
+Check if user's email has been verified.
+```javascript
+const verified = await auth.isEmailVerified(userId);
+```
+
+### Password Reset Methods
+
+#### `async sendPasswordResetEmail(email, resetUrl)`
+Send password reset link to user's email.
+```javascript
+await auth.sendPasswordResetEmail(
+  'user@example.com',
+  'https://myapp.com/reset-password'
+);
+```
+
+#### `async resetPassword(token, newPassword)`
+Reset password using token from reset email link.
+```javascript
+await auth.resetPassword(tokenFromURL, 'NewSecurePass123!');
+```
+
+### Database Maintenance Methods
+
+#### `async cleanupExpiredTokens()`
+Remove expired email verification tokens from database.
+```javascript
+const deleted = await auth.cleanupExpiredTokens();
+console.log(`Cleaned up ${deleted} expired tokens`);
+```
+
+#### `async cleanupExpiredLoginAttempts(daysToKeep = 30)`
+Remove old login attempt records (default: keeps 30 days).
+```javascript
+const deleted = await auth.cleanupExpiredLoginAttempts(60);
+console.log(`Cleaned up ${deleted} old login attempts`);
+```
+
+#### `async cleanupRevokedRefreshTokens(daysToKeep = 7)`
+Remove old revoked refresh tokens (default: keeps 7 days).
+```javascript
+const deleted = await auth.cleanupRevokedRefreshTokens(14);
+console.log(`Cleaned up ${deleted} revoked tokens`);
+```
+
+#### `async performMaintenance(options)`
+Run all cleanup operations at once (recommended for cron jobs).
+```javascript
+const result = await auth.performMaintenance({
+  cleanupLoginAttempts: true,
+  loginAttemptsRetentionDays: 90,
+  cleanupVerificationTokens: true,
+  cleanupRevokedTokens: true,
+  revokedTokensRetentionDays: 14
+});
+console.log(`Maintenance completed in ${result.duration}ms`);
+console.log(`Deleted: ${result.loginAttemptsDeleted} attempts, ${result.verificationTokensDeleted} tokens, ${result.revokedTokensDeleted} revoked`);
+```
+
+#### `getPool()`
+Get raw database connection pool for advanced queries.
+⚠️ **Use with caution** - bypasses security checks.
+```javascript
+const pool = auth.getPool();
+const [rows] = await pool.query('SELECT * FROM users WHERE isActive = ?', [true]);
+```
+
+### Schema Customization Methods
+
+#### `addField(fieldConfig)`
+Add custom field to user schema (must be called BEFORE `init()`).
+```javascript
+auth.addField({
+  name: 'phoneNumber',
+  type: 'VARCHAR(20)',
+  required: false,
+  unique: true
+});
+await auth.init();
+```
+
+#### `async dangerouslyAddColumn(fieldConfig, options)`
+⚠️ **DANGEROUS**: Add column to existing database at runtime.
+Requires `confirmed: true` safety flag.
+```javascript
+await auth.dangerouslyAddColumn({
+  name: 'phoneNumber',
+  type: 'VARCHAR(20)',
+  unique: true
+}, { confirmed: true });
+```
+
+#### `async dangerouslyMigrateSchema(fields, options)`
+⚠️ **DANGEROUS**: Add multiple columns to existing database.
+Supports transactions (PostgreSQL only).
+```javascript
+await auth.dangerouslyMigrateSchema([
+  { name: 'age', type: 'INTEGER', defaultValue: 0 },
+  { name: 'city', type: 'VARCHAR(100)' }
+], { confirmed: true, useTransaction: true });
+```
+
+📖 **See [DANGEROUS_MIGRATIONS.md](DANGEROUS_MIGRATIONS.md) for complete migration guide.**
+
+### Hook Methods
+
+#### `on(event, callback)`
+Register hooks for lifecycle events.
+```javascript
+auth.on('afterRegister', async (result) => {
+  console.log('New user registered:', result.user.email);
+  await sendWelcomeEmail(result.user);
+});
+
+auth.on('afterLogin', async (result) => {
+  await trackAnalytics('login', result.user);
+});
+```
+
+**Available Events:**
+- `beforeRegister` - Before user registration
+- `afterRegister` - After successful registration
+- `beforeLogin` - Before user login
+- `afterLogin` - After successful login
+- `beforeTokenRefresh` - Before token refresh
+- `afterTokenRefresh` - After token refresh
+
+### Express/Fastify Integration
+
+#### `router(options)`
+Get Express router with pre-built authentication routes.
+```javascript
+app.use('/auth', auth.router({
+  prefix: '/api',
+  enableRateLimit: true
+}));
+```
+
+#### `middleware()`
+Get authentication middleware for protecting routes.
+```javascript
+app.get('/api/protected', auth.middleware(), (req, res) => {
+  res.json({ user: req.user });
+});
+```
+
+### Utility Methods
+
+#### `async close()`
+Close database connection gracefully.
+```javascript
+await auth.close();
+```
 
 ## 🤝 Support & Community
 
