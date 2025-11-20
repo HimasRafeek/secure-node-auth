@@ -242,6 +242,103 @@ declare module 'secure-node-auth' {
     on(event: HookEvent, callback: HookCallback): this;
 
     /**
+     * Send verification email to user
+     * @param email - User email address
+     * @param verificationUrl - Base URL for verification (e.g., 'http://localhost:3000/verify-email')
+     */
+    sendVerificationEmail(
+      email: string,
+      verificationUrl: string
+    ): Promise<{
+      success: boolean;
+      messageId: string;
+    }>;
+
+    /**
+     * Send 6-digit verification code via email (optional alternative to URL-based verification)
+     * @param email - User email address
+     * @param options - Optional configuration
+     */
+    sendVerificationCode(
+      email: string,
+      options?: {
+        expiresInMinutes?: number;
+      }
+    ): Promise<{
+      success: boolean;
+      messageId: string;
+    }>;
+
+    /**
+     * Verify email with token from URL
+     * @param token - Verification token from email
+     */
+    verifyEmail(token: string): Promise<{
+      success: boolean;
+      userId: number;
+      message: string;
+    }>;
+
+    /**
+     * Verify email with 6-digit code
+     * @param email - User email address
+     * @param code - 6-digit verification code
+     */
+    verifyCode(
+      email: string,
+      code: string
+    ): Promise<{
+      success: boolean;
+      userId: number;
+      message: string;
+    }>;
+
+    /**
+     * Resend verification email
+     * @param email - User email address
+     * @param verificationUrl - Base URL for verification
+     */
+    resendVerificationEmail(
+      email: string,
+      verificationUrl: string
+    ): Promise<{
+      success: boolean;
+      messageId: string;
+    }>;
+
+    /**
+     * Send password reset email
+     * @param email - User email address
+     * @param resetUrl - Base URL for password reset
+     */
+    sendPasswordResetEmail(
+      email: string,
+      resetUrl: string
+    ): Promise<{
+      success: boolean;
+      message: string;
+    }>;
+
+    /**
+     * Reset password with token
+     * @param token - Reset token from email
+     * @param newPassword - New password
+     */
+    resetPassword(
+      token: string,
+      newPassword: string
+    ): Promise<{
+      success: boolean;
+      message: string;
+    }>;
+
+    /**
+     * Check if email is verified
+     * @param userId - User ID
+     */
+    isEmailVerified(userId: number): Promise<boolean>;
+
+    /**
      * Get Express router with auth routes
      */
     router(options?: RouterOptions): Router;

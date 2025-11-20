@@ -114,6 +114,13 @@ class EmailService {
   }
 
   /**
+   * Generate a 6-digit numeric verification code
+   */
+  generate6DigitCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  /**
    * Send verification email to user
    */
   async sendVerificationEmail(userId, email, verificationUrl) {
@@ -158,6 +165,58 @@ class EmailService {
     } catch (error) {
       console.error('[EmailService] Failed to send verification email:', error.message);
       throw new Error(`Failed to send verification email: ${error.message}`);
+    }
+  }
+
+  /**
+   * Send 6-digit verification code via email (alternative to URL-based verification)
+   * @param {number} userId - User ID
+   * @param {string} email - User email
+   * @param {Object} options - Optional configuration
+   * @param {number} options.expiresInMinutes - Code expiration time (default: 10 minutes)
+   * @returns {Promise<Object>} Result with success status and code (for testing)
+   */
+  async sendVerificationCode(userId, email, options = {}) {
+    if (!this.transporter) {
+      throw new Error('Email service not configured. Please set up SMTP settings.');
+    }
+
+    const { expiresInMinutes = 10 } = options;
+
+    try {
+      // Generate 6-digit code
+      const code = this.generate6DigitCode();
+      const expiresAt = Date.now() + expiresInMinutes * 60 * 1000;
+
+      // Store code in database (using token field)
+      await this.dbPool.execute(
+        `INSERT INTO \`${this.tables.verificationTokens}\` (userId, token, expiresAt) VALUES (?, ?, ?)`,
+        [userId, code, expiresAt]
+      );
+
+      // Email template
+      const mailOptions = {
+        from: this.config.smtp.from || this.config.smtp.auth.user,
+        to: email,
+        subject: this.config.emailTemplates?.verificationCode?.subject || 'Your Verification Code',
+        html: this.config.emailTemplates?.verificationCode?.html
+          ? this.config.emailTemplates.verificationCode.html(code, email, expiresInMinutes)
+          : this._defaultVerificationCodeTemplate(code, email, expiresInMinutes),
+      };
+
+      // Send email
+      const info = await this.transporter.sendMail(mailOptions);
+
+      console.log('[EmailService] Verification code sent:', info.messageId);
+
+      return {
+        success: true,
+        messageId: info.messageId,
+        code, // Return code for testing purposes
+      };
+    } catch (error) {
+      console.error('[EmailService] Failed to send verification code:', error.message);
+      throw new Error(`Failed to send verification code: ${error.message}`);
     }
   }
 
@@ -209,6 +268,87 @@ class EmailService {
       await connection.commit();
 
       console.log('[EmailService] Email verified successfully for user:', userId);
+
+      return {
+        success: true,
+        userId,
+        message: 'Email verified successfully',
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
+  /**
+   * Verify email with 6-digit code
+   * @param {string} email - User email
+   * @param {string} code - 6-digit verification code
+   * @returns {Promise<Object>} Verification result
+   */
+  async verifyCode(email, code) {
+    const connection = await this.dbPool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // Find user by email
+      const [users] = await connection.execute(
+        `SELECT id, emailVerified FROM \`${this.tables.users}\` WHERE email = ? LIMIT 1`,
+        [email]
+      );
+
+      if (users.length === 0) {
+        throw new Error('User not found');
+      }
+
+      const { id: userId, emailVerified } = users[0];
+
+      if (emailVerified) {
+        throw new Error('Email is already verified');
+      }
+
+      // Find valid code for this user
+      const [tokens] = await connection.execute(
+        `SELECT token, expiresAt FROM \`${this.tables.verificationTokens}\` 
+         WHERE userId = ? AND token = ? LIMIT 1`,
+        [userId, code]
+      );
+
+      if (tokens.length === 0) {
+        throw new Error('Invalid or expired verification code');
+      }
+
+      const { expiresAt } = tokens[0];
+
+      // Check if code expired
+      if (Date.now() > expiresAt) {
+        // Delete expired code
+        await connection.execute(
+          `DELETE FROM \`${this.tables.verificationTokens}\` WHERE userId = ? AND token = ?`,
+          [userId, code]
+        );
+        await connection.commit();
+        throw new Error('Verification code has expired. Please request a new one.');
+      }
+
+      // Mark user as verified
+      await connection.execute(
+        `UPDATE \`${this.tables.users}\` SET emailVerified = TRUE WHERE id = ?`,
+        [userId]
+      );
+
+      // Delete all verification codes for this user
+      await connection.execute(
+        `DELETE FROM \`${this.tables.verificationTokens}\` WHERE userId = ?`,
+        [userId]
+      );
+
+      await connection.commit();
+
+      console.log('[EmailService] Email verified successfully with code for user:', userId);
 
       return {
         success: true,
@@ -308,8 +448,6 @@ class EmailService {
       // Send email
       const info = await this.transporter.sendMail(mailOptions);
 
-      console.log('[EmailService] Password reset email sent:', info.messageId);
-
       return {
         success: true,
         messageId: info.messageId,
@@ -397,6 +535,57 @@ class EmailService {
           
           <p style="color: #666; font-size: 14px;">
             If you didn't create an account, you can safely ignore this email.
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+          <p>This is an automated email, please do not reply.</p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Default verification code email template
+   */
+  _defaultVerificationCodeTemplate(code, email, expiresInMinutes) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Verification Code</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0;">Your Verification Code</h1>
+        </div>
+        
+        <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+          <p>Hello,</p>
+          
+          <p>Your verification code is:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background: white; border: 2px solid #667eea; border-radius: 10px; padding: 20px; display: inline-block;">
+              <span style="font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                ${code}
+              </span>
+            </div>
+          </div>
+          
+          <p style="text-align: center; font-size: 16px; font-weight: bold; color: #667eea;">
+            Enter this code to verify your email address
+          </p>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 30px;">
+            This verification code will expire in <strong>${expiresInMinutes} minutes</strong>.
+          </p>
+          
+          <p style="color: #666; font-size: 14px;">
+            If you didn't request this code, you can safely ignore this email.
           </p>
         </div>
         

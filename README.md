@@ -9,8 +9,10 @@
 ## ✨ Features
 
 - ⚡ **Zero Configuration** - Works out of the box with sensible defaults
-- �️ **MySQL & PostgreSQL Support** - Choose your preferred database with one line of config
-- �🔒 **Production-Ready Security** - Bcrypt hashing, JWT tokens, rate limiting, account lockout
+- 🗄️ **MySQL & PostgreSQL Support** - Choose your preferred database with one line of config
+- 🔒 **Production-Ready Security** - Bcrypt hashing, JWT tokens, rate limiting, account lockout
+- 📧 **Email Verification** - URL-based or **6-digit code** verification (new!)
+- 🔍 **Audit Logging** - Optional security event logging (customizable)
 - 🚀 **Lightning Fast** - Built with connection pooling and optimized queries
 - 🎨 **Highly Customizable** - Add custom fields, hooks, and configurations
 - 🔄 **Auto Schema Setup** - Automatically creates tables, indexes, and relationships
@@ -27,6 +29,7 @@ npm install secure-node-auth
 ```
 
 **Dependencies:**
+
 - `mysql2` or `pg` - Database client (MySQL or PostgreSQL)
 - `jsonwebtoken` - JWT token generation
 - `bcrypt` - Password hashing
@@ -34,11 +37,13 @@ npm install secure-node-auth
 - `express` or `fastify` - Web framework (peer dependencies)
 
 **For MySQL:**
+
 ```bash
 npm install secure-node-auth mysql2
 ```
 
 **For PostgreSQL:**
+
 ```bash
 npm install secure-node-auth pg
 ```
@@ -52,12 +57,12 @@ const SecureNodeAuth = require('secure-node-auth');
 
 const auth = new SecureNodeAuth({
   connection: {
-    type: 'mysql',  // Optional, defaults to MySQL
+    type: 'mysql', // Optional, defaults to MySQL
     host: 'localhost',
     user: 'root',
     password: 'your_password',
-    database: 'myapp'
-  }
+    database: 'myapp',
+  },
 });
 
 await auth.init(); // Auto-creates tables!
@@ -73,12 +78,12 @@ const SecureNodeAuth = require('secure-node-auth');
 
 const auth = new SecureNodeAuth({
   connection: {
-    type: 'postgres',  // Use PostgreSQL
+    type: 'postgres', // Use PostgreSQL
     host: 'localhost',
     user: 'postgres',
     password: 'your_password',
-    database: 'myapp'
-  }
+    database: 'myapp',
+  },
 });
 
 await auth.init(); // Auto-creates tables!
@@ -90,6 +95,7 @@ app.use('/auth', auth.router());
 **📘 [Complete PostgreSQL Guide](docs/POSTGRES_GUIDE.md)** - Migration, Docker setup, and advanced features.
 
 That's it! You now have a complete authentication system with:
+
 - ✅ User registration
 - ✅ Login with JWT
 - ✅ Token refresh
@@ -115,8 +121,8 @@ const auth = new SecureNodeAuth({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-  }
+    database: process.env.DB_NAME,
+  },
 });
 
 await auth.init();
@@ -147,8 +153,8 @@ async function start() {
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME
-    }
+      database: process.env.DB_NAME,
+    },
   });
 
   await auth.init();
@@ -157,17 +163,21 @@ async function start() {
   await fastify.register(secureNodeAuthPlugin, {
     authInstance: auth,
     routeOptions: {
-      prefix: '/auth'
-    }
+      prefix: '/auth',
+    },
   });
 
   // Protected route example
-  fastify.get('/api/profile', {
-    preHandler: fastify.authenticate
-  }, async (request, reply) => {
-    const user = await auth.getUserById(request.user.userId);
-    return { user };
-  });
+  fastify.get(
+    '/api/profile',
+    {
+      preHandler: fastify.authenticate,
+    },
+    async (request, reply) => {
+      const user = await auth.getUserById(request.user.userId);
+      return { user };
+    }
+  );
 
   await fastify.listen({ port: 3000 });
   console.log('🚀 Server running on http://localhost:3000');
@@ -183,26 +193,28 @@ start();
 **✅ Recommended: Add fields before initialization**
 
 ```javascript
-const auth = new SecureNodeAuth({ /* config */ });
+const auth = new SecureNodeAuth({
+  /* config */
+});
 
 // Add custom fields BEFORE init()
 auth.addField({
   name: 'phoneNumber',
   type: 'VARCHAR(20)',
   required: false,
-  unique: true
+  unique: true,
 });
 
 auth.addField({
   name: 'companyName',
   type: 'VARCHAR(255)',
-  required: false
+  required: false,
 });
 
 auth.addField({
   name: 'subscriptionTier',
   type: "ENUM('free', 'premium', 'enterprise')",
-  defaultValue: 'free'
+  defaultValue: 'free',
 });
 
 await auth.init();
@@ -213,7 +225,7 @@ await auth.register({
   password: 'SecurePass123!',
   phoneNumber: '+1234567890',
   companyName: 'Tech Corp',
-  subscriptionTier: 'premium'
+  subscriptionTier: 'premium',
 });
 ```
 
@@ -226,17 +238,23 @@ For existing databases, you can add columns after initialization using dangerous
 await auth.init();
 
 // Add single column (⚠️ can cause table locks)
-await auth.dangerouslyAddColumn({
-  name: 'phoneNumber',
-  type: 'VARCHAR(20)',
-  unique: true,
-}, { confirmed: true });
+await auth.dangerouslyAddColumn(
+  {
+    name: 'phoneNumber',
+    type: 'VARCHAR(20)',
+    unique: true,
+  },
+  { confirmed: true }
+);
 
 // Add multiple columns with transaction (PostgreSQL)
-await auth.dangerouslyMigrateSchema([
-  { name: 'age', type: 'INTEGER', defaultValue: 0 },
-  { name: 'city', type: 'VARCHAR(100)' },
-], { confirmed: true, useTransaction: true });
+await auth.dangerouslyMigrateSchema(
+  [
+    { name: 'age', type: 'INTEGER', defaultValue: 0 },
+    { name: 'city', type: 'VARCHAR(100)' },
+  ],
+  { confirmed: true, useTransaction: true }
+);
 ```
 
 **📖 [Complete Migration Guide](docs/DANGEROUS_MIGRATIONS.md)** - Safety tips, examples, and best practices.
@@ -275,7 +293,7 @@ const { user, tokens } = await auth.register({
   email: 'john@example.com',
   password: 'SecurePass123!',
   firstName: 'John',
-  lastName: 'Doe'
+  lastName: 'Doe',
 });
 
 // Login
@@ -311,34 +329,34 @@ const auth = new SecureNodeAuth({
     password: '',
     database: 'myapp',
     port: 3306,
-    connectionLimit: 10
+    connectionLimit: 10,
   },
 
   // JWT configuration
   jwt: {
     accessSecret: 'your-access-secret',
     refreshSecret: 'your-refresh-secret',
-    accessExpiresIn: '15m',    // 15 minutes
-    refreshExpiresIn: '7d'      // 7 days
+    accessExpiresIn: '15m', // 15 minutes
+    refreshExpiresIn: '7d', // 7 days
   },
 
   // Security settings
   security: {
-    bcryptRounds: 10,           // Higher = more secure, slower
-    maxLoginAttempts: 5,        // Account lockout threshold
-    lockoutTime: 900000,        // 15 minutes in milliseconds
+    bcryptRounds: 10, // Higher = more secure, slower
+    maxLoginAttempts: 5, // Account lockout threshold
+    lockoutTime: 900000, // 15 minutes in milliseconds
     passwordMinLength: 8,
     passwordRequireUppercase: true,
     passwordRequireNumbers: true,
-    passwordRequireSpecialChars: true
+    passwordRequireSpecialChars: true,
   },
 
   // Custom table names
   tables: {
     users: 'my_users',
     refreshTokens: 'my_tokens',
-    loginAttempts: 'my_login_attempts'
-  }
+    loginAttempts: 'my_login_attempts',
+  },
 });
 ```
 
@@ -346,22 +364,23 @@ const auth = new SecureNodeAuth({
 
 When you mount `auth.router()`, these endpoints are automatically available:
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/register` | Register new user | ❌ |
-| POST | `/login` | Login user | ❌ |
-| POST | `/refresh` | Refresh access token | ❌ |
-| POST | `/logout` | Logout (revoke token) | ❌ |
-| POST | `/logout-all` | Logout all devices | ✅ |
-| GET | `/me` | Get current user | ✅ |
-| PATCH | `/me` | Update user profile | ✅ |
-| POST | `/change-password` | Change password | ✅ |
-| POST | `/verify` | Verify token | ❌ |
-| GET | `/health` | Health check | ❌ |
+| Method | Endpoint           | Description           | Auth Required |
+| ------ | ------------------ | --------------------- | ------------- |
+| POST   | `/register`        | Register new user     | ❌            |
+| POST   | `/login`           | Login user            | ❌            |
+| POST   | `/refresh`         | Refresh access token  | ❌            |
+| POST   | `/logout`          | Logout (revoke token) | ❌            |
+| POST   | `/logout-all`      | Logout all devices    | ✅            |
+| GET    | `/me`              | Get current user      | ✅            |
+| PATCH  | `/me`              | Update user profile   | ✅            |
+| POST   | `/change-password` | Change password       | ✅            |
+| POST   | `/verify`          | Verify token          | ❌            |
+| GET    | `/health`          | Health check          | ❌            |
 
 ### Request/Response Examples
 
 **Register:**
+
 ```javascript
 POST /auth/register
 {
@@ -387,6 +406,7 @@ POST /auth/register
 ```
 
 **Login:**
+
 ```javascript
 POST /auth/login
 {
@@ -408,6 +428,7 @@ POST /auth/login
 ## 📋 Complete API Methods
 
 ### Core Authentication
+
 - `await auth.init()` - Initialize system and create tables
 - `await auth.register(userData)` - Register new user
 - `await auth.login(email, password)` - Login and get tokens
@@ -417,6 +438,7 @@ POST /auth/login
 - `await auth.verifyAccessToken(token)` - Verify JWT token
 
 ### User Management
+
 - `await auth.getUserById(userId)` - Get user by ID
 - `await auth.getUserByEmail(email)` - Get user by email
 - `await auth.updateUser(userId, updates)` - Update user data
@@ -426,16 +448,28 @@ POST /auth/login
 - `await auth.isAccountLocked(email)` - Check if account locked
 
 ### Email Verification
+
+**URL-Based Verification:**
 - `await auth.sendVerificationEmail(email, url)` - Send verification email
 - `await auth.verifyEmail(token)` - Verify email with token
 - `await auth.resendVerificationEmail(email, url)` - Resend verification
+
+**6-Digit Code Verification (New!):**
+- `await auth.sendVerificationCode(email, options)` - Send 6-digit code
+- `await auth.verifyCode(email, code)` - Verify with 6-digit code
+
+**Utility:**
 - `await auth.isEmailVerified(userId)` - Check if email verified
 
+> 💡 **Tip**: Use URL verification for web apps, 6-digit codes for mobile apps or better UX. See [Verification Guide](docs/VERIFICATION_AND_AUDIT_GUIDE.md)
+
 ### Password Reset
+
 - `await auth.sendPasswordResetEmail(email, url)` - Send reset email
 - `await auth.resetPassword(token, newPassword)` - Reset password
 
 ### Database Maintenance
+
 - `await auth.cleanupExpiredTokens()` - Clean expired tokens
 - `await auth.cleanupExpiredLoginAttempts(days)` - Clean old attempts
 - `await auth.cleanupRevokedRefreshTokens(days)` - Clean revoked tokens
@@ -443,11 +477,13 @@ POST /auth/login
 - `auth.getPool()` - Get raw database pool
 
 ### Schema Customization
+
 - `auth.addField(config)` - Add field before init
 - `await auth.dangerouslyAddColumn(config, options)` - Add column at runtime
 - `await auth.dangerouslyMigrateSchema(fields, options)` - Batch migration
 
 ### Hooks & Integration
+
 - `auth.on(event, callback)` - Register lifecycle hooks
 - `auth.router(options)` - Get Express/Fastify router
 - `auth.middleware()` - Get auth middleware
@@ -458,18 +494,21 @@ POST /auth/login
 ## 🛡️ Security Features
 
 ### Password Security
+
 - ✅ Bcrypt hashing (configurable rounds)
 - ✅ Minimum length requirements
 - ✅ Complexity requirements (uppercase, numbers, special chars)
 - ✅ Common password blacklist
 
 ### Account Protection
+
 - ✅ Brute force protection (rate limiting)
 - ✅ Account lockout after failed attempts
 - ✅ Automatic lockout expiration
 - ✅ Login attempt tracking
 
 ### Token Security
+
 - ✅ Separate access and refresh tokens
 - ✅ Short-lived access tokens (15m default)
 - ✅ Token revocation support
@@ -477,6 +516,7 @@ POST /auth/login
 - ✅ Automatic token cleanup
 
 ### Database Security
+
 - ✅ Parameterized queries (SQL injection protection)
 - ✅ Connection pooling
 - ✅ Indexed queries for performance
@@ -487,6 +527,7 @@ POST /auth/login
 The package automatically creates these tables:
 
 **secure_auth_users**
+
 ```sql
 - id (PRIMARY KEY)
 - email (UNIQUE, INDEXED)
@@ -501,6 +542,7 @@ The package automatically creates these tables:
 ```
 
 **secure_auth_refresh_tokens**
+
 ```sql
 - id (PRIMARY KEY)
 - userId (FOREIGN KEY)
@@ -511,6 +553,7 @@ The package automatically creates these tables:
 ```
 
 **secure_auth_login_attempts**
+
 ```sql
 - id (PRIMARY KEY)
 - email (INDEXED)
@@ -523,6 +566,7 @@ The package automatically creates these tables:
 ## 🎣 Hooks System
 
 Available hooks:
+
 - `beforeRegister` - Before user registration
 - `afterRegister` - After successful registration
 - `beforeLogin` - Before login attempt
@@ -577,6 +621,7 @@ npm run example
 ```
 
 Test endpoints with curl:
+
 ```bash
 # Register
 curl -X POST http://localhost:3000/auth/register \
@@ -594,6 +639,7 @@ curl -X POST http://localhost:3000/auth/login \
 ### Environment Variables
 
 Create a `.env` file:
+
 ```env
 DB_HOST=localhost
 DB_USER=root
@@ -687,6 +733,7 @@ MIT © 2025
 ## 💡 Support
 
 If you find this package helpful, please consider:
+
 - ⭐ Starring the repository
 - 🐛 Reporting bugs
 - 💡 Suggesting new features

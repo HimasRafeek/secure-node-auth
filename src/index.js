@@ -284,9 +284,9 @@ class SecureNodeAuth {
     if (this.initialized) {
       throw new Error(
         'Cannot add fields after initialization. Call addField() before init().\n\n' +
-        '💡 For existing databases, use dangerouslyAddColumn() instead:\n' +
-        '   auth.dangerouslyAddColumn({ name: "fieldName", type: "VARCHAR(255)" }, { confirmed: true })\n\n' +
-        '⚠️  WARNING: dangerouslyAddColumn() can cause table locks and downtime.'
+          '💡 For existing databases, use dangerouslyAddColumn() instead:\n' +
+          '   auth.dangerouslyAddColumn({ name: "fieldName", type: "VARCHAR(255)" }, { confirmed: true })\n\n' +
+          '⚠️  WARNING: dangerouslyAddColumn() can cause table locks and downtime.'
       );
     }
 
@@ -347,10 +347,10 @@ class SecureNodeAuth {
 
   /**
    * ⚠️ DANGEROUS: Add column to existing table at runtime
-   * 
+   *
    * This method adds a new column to an already initialized database table.
    * USE WITH EXTREME CAUTION - Can cause table locks and downtime on production databases.
-   * 
+   *
    * @param {Object} fieldConfig - Field configuration
    * @param {string} fieldConfig.name - Column name (alphanumeric and underscore only)
    * @param {string} fieldConfig.type - SQL data type (e.g., 'VARCHAR(20)', 'INTEGER', 'DECIMAL(10,2)')
@@ -363,7 +363,7 @@ class SecureNodeAuth {
    * @param {boolean} [options.skipIndexCreation=false] - Skip index creation for performance
    * @param {number} [options.warnThreshold=1000] - Warn if table has more rows than this
    * @returns {Promise<Object>} Migration result with success status and details
-   * 
+   *
    * @example
    * // Add optional column
    * await auth.dangerouslyAddColumn({
@@ -371,7 +371,7 @@ class SecureNodeAuth {
    *   type: 'VARCHAR(20)',
    *   unique: true,
    * }, { confirmed: true });
-   * 
+   *
    * @example
    * // Add required column with default value
    * await auth.dangerouslyAddColumn({
@@ -380,7 +380,7 @@ class SecureNodeAuth {
    *   required: true,
    *   defaultValue: 0,
    * }, { confirmed: true });
-   * 
+   *
    * @throws {Error} If not initialized, not confirmed, or validation fails
    */
   async dangerouslyAddColumn(fieldConfig, options = {}) {
@@ -395,32 +395,36 @@ class SecureNodeAuth {
     if (!this.initialized) {
       throw new Error(
         '❌ Cannot add column before initialization.\n\n' +
-        '   For new installations, use addField() BEFORE init():\n' +
-        '   auth.addField({ name: "fieldName", type: "VARCHAR(255)" });\n' +
-        '   await auth.init();\n'
+          '   For new installations, use addField() BEFORE init():\n' +
+          '   auth.addField({ name: "fieldName", type: "VARCHAR(255)" });\n' +
+          '   await auth.init();\n'
       );
     }
 
     // Safety check 2: Require explicit confirmation
     if (!confirmed) {
       throw new Error(
-        '\n' + '='.repeat(70) + '\n' +
-        '⚠️  DANGEROUS OPERATION - EXPLICIT CONFIRMATION REQUIRED\n' +
-        '='.repeat(70) + '\n\n' +
-        '   This operation adds a column to an existing production table.\n' +
-        '   Risks include:\n' +
-        '   • Table locks blocking ALL queries during migration\n' +
-        '   • Potential downtime on large tables (>10,000 rows)\n' +
-        '   • Failed deployments if schema changes are rolled back\n' +
-        '   • Data inconsistencies if migration is interrupted\n\n' +
-        '📋 REQUIRED STEPS BEFORE PROCEEDING:\n' +
-        '   1. ✅ Backup your database\n' +
-        '   2. ✅ Test on a database copy first\n' +
-        '   3. ✅ Schedule during low-traffic maintenance window\n' +
-        '   4. ✅ Monitor table size and server load\n\n' +
-        '📖 To proceed, pass { confirmed: true } in options:\n\n' +
-        '   auth.dangerouslyAddColumn(fieldConfig, { confirmed: true })\n\n' +
-        '='.repeat(70) + '\n'
+        '\n' +
+          '='.repeat(70) +
+          '\n' +
+          '⚠️  DANGEROUS OPERATION - EXPLICIT CONFIRMATION REQUIRED\n' +
+          '='.repeat(70) +
+          '\n\n' +
+          '   This operation adds a column to an existing production table.\n' +
+          '   Risks include:\n' +
+          '   • Table locks blocking ALL queries during migration\n' +
+          '   • Potential downtime on large tables (>10,000 rows)\n' +
+          '   • Failed deployments if schema changes are rolled back\n' +
+          '   • Data inconsistencies if migration is interrupted\n\n' +
+          '📋 REQUIRED STEPS BEFORE PROCEEDING:\n' +
+          '   1. ✅ Backup your database\n' +
+          '   2. ✅ Test on a database copy first\n' +
+          '   3. ✅ Schedule during low-traffic maintenance window\n' +
+          '   4. ✅ Monitor table size and server load\n\n' +
+          '📖 To proceed, pass { confirmed: true } in options:\n\n' +
+          '   auth.dangerouslyAddColumn(fieldConfig, { confirmed: true })\n\n' +
+          '='.repeat(70) +
+          '\n'
       );
     }
 
@@ -443,23 +447,32 @@ class SecureNodeAuth {
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
       throw new Error(
         `Invalid field name: "${name}"\n` +
-        '   Field names must:\n' +
-        '   • Start with a letter or underscore\n' +
-        '   • Contain only letters, numbers, and underscores\n' +
-        '   • Not contain spaces or special characters'
+          '   Field names must:\n' +
+          '   • Start with a letter or underscore\n' +
+          '   • Contain only letters, numbers, and underscores\n' +
+          '   • Not contain spaces or special characters'
       );
     }
 
     // Prevent overriding system fields
     const reservedFields = [
-      'id', 'email', 'password', 'createdAt', 'updatedAt',
-      'emailVerified', 'emailVerificationToken', 'resetPasswordToken',
-      'resetPasswordExpires', 'isActive', 'firstName', 'lastName',
+      'id',
+      'email',
+      'password',
+      'createdAt',
+      'updatedAt',
+      'emailVerified',
+      'emailVerificationToken',
+      'resetPasswordToken',
+      'resetPasswordExpires',
+      'isActive',
+      'firstName',
+      'lastName',
     ];
     if (reservedFields.includes(name)) {
       throw new Error(
         `Field name "${name}" is reserved by the system.\n` +
-        `   Reserved fields: ${reservedFields.join(', ')}`
+          `   Reserved fields: ${reservedFields.join(', ')}`
       );
     }
 
@@ -485,11 +498,11 @@ class SecureNodeAuth {
         if (exists) {
           console.log(`⚠️  Column "${name}" already exists in table "${tableName}".`);
           console.log('   Skipping migration (safe retry).\n');
-          return { 
-            success: true, 
-            skipped: true, 
+          return {
+            success: true,
+            skipped: true,
             columnName: name,
-            reason: 'Column already exists'
+            reason: 'Column already exists',
           };
         }
         console.log('   Column does not exist. Proceeding with migration.\n');
@@ -523,22 +536,22 @@ class SecureNodeAuth {
       if (required && defaultValue === undefined && rowCount > 0) {
         throw new Error(
           `❌ Cannot add required column "${name}" without a default value.\n\n` +
-          `   The table "${tableName}" has ${rowCount.toLocaleString()} existing rows.\n` +
-          `   A required (NOT NULL) column needs a value for all existing rows.\n\n` +
-          '   Solutions:\n' +
-          `   1. Add a default value:\n` +
-          `      auth.dangerouslyAddColumn({\n` +
-          `        name: '${name}',\n` +
-          `        type: '${type}',\n` +
-          `        required: true,\n` +
-          `        defaultValue: 'your_default_value'\n` +
-          `      }, { confirmed: true });\n\n` +
-          `   2. Make the column optional:\n` +
-          `      auth.dangerouslyAddColumn({\n` +
-          `        name: '${name}',\n` +
-          `        type: '${type}',\n` +
-          `        required: false\n` +
-          `      }, { confirmed: true });\n`
+            `   The table "${tableName}" has ${rowCount.toLocaleString()} existing rows.\n` +
+            `   A required (NOT NULL) column needs a value for all existing rows.\n\n` +
+            '   Solutions:\n' +
+            `   1. Add a default value:\n` +
+            `      auth.dangerouslyAddColumn({\n` +
+            `        name: '${name}',\n` +
+            `        type: '${type}',\n` +
+            `        required: true,\n` +
+            `        defaultValue: 'your_default_value'\n` +
+            `      }, { confirmed: true });\n\n` +
+            `   2. Make the column optional:\n` +
+            `      auth.dangerouslyAddColumn({\n` +
+            `        name: '${name}',\n` +
+            `        type: '${type}',\n` +
+            `        required: false\n` +
+            `      }, { confirmed: true });\n`
         );
       }
 
@@ -548,7 +561,7 @@ class SecureNodeAuth {
 
       if (isPostgres) {
         sql = `ALTER TABLE "${tableName}" ADD COLUMN "${name}" ${type}`;
-        
+
         if (defaultValue !== undefined) {
           sql += ` DEFAULT ${this.db.escapeValue(defaultValue)}`;
         }
@@ -561,7 +574,7 @@ class SecureNodeAuth {
       } else {
         // MySQL
         sql = `ALTER TABLE \`${tableName}\` ADD COLUMN \`${name}\` ${type}`;
-        
+
         if (defaultValue !== undefined) {
           sql += ` DEFAULT ${this.db.escapeValue(defaultValue)}`;
         }
@@ -578,18 +591,18 @@ class SecureNodeAuth {
       // Step 5: Execute ALTER TABLE
       console.log('⏳ Executing migration...');
       console.log('   (This may take several seconds for large tables)\n');
-      
+
       const startTime = Date.now();
       await this.db.query(sql);
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      
+
       console.log(`✅ Column "${name}" added successfully in ${duration}s\n`);
 
       // Step 6: Create index if needed (PostgreSQL: use CONCURRENTLY)
       if (unique && !skipIndexCreation) {
         console.log('🔍 Creating index for unique constraint...');
         const indexName = `idx_${tableName}_${name}`.substring(0, 63); // PostgreSQL limit
-        
+
         try {
           if (isPostgres) {
             // CONCURRENTLY prevents table locks in PostgreSQL
@@ -631,7 +644,6 @@ class SecureNodeAuth {
         rowsAffected: rowCount,
         duration: `${duration}s`,
       };
-
     } catch (error) {
       console.error('\n' + '='.repeat(70));
       console.error('❌ MIGRATION FAILED');
@@ -644,20 +656,20 @@ class SecureNodeAuth {
       console.error('   4. Check database logs for detailed error information');
       console.error('   5. Ensure no other migrations are running simultaneously');
       console.error('='.repeat(70) + '\n');
-      
+
       throw new Error(`Column migration failed: ${error.message}`);
     }
   }
 
   /**
    * ⚠️ DANGEROUS: Migrate multiple columns to existing table with transaction support
-   * 
+   *
    * This method adds multiple columns to an already initialized database table.
    * PostgreSQL: Uses transactions for atomic all-or-nothing operation.
    * MySQL: Executes sequentially (transactions don't support ALTER TABLE).
-   * 
+   *
    * USE WITH EXTREME CAUTION - Can cause extended table locks on production databases.
-   * 
+   *
    * @param {Array<Object>} fields - Array of field configurations (same format as dangerouslyAddColumn)
    * @param {Object} [options] - Migration options
    * @param {boolean} [options.confirmed=false] - REQUIRED: Must be true to proceed
@@ -667,18 +679,18 @@ class SecureNodeAuth {
    * @param {boolean} [options.skipIndexCreation=false] - Skip index creation
    * @param {number} [options.warnThreshold=1000] - Warn if table has more rows
    * @returns {Promise<Object>} Migration result with statistics
-   * 
+   *
    * @example
    * // Add multiple columns safely
    * await auth.dangerouslyMigrateSchema([
    *   { name: 'phoneNumber', type: 'VARCHAR(20)', unique: true },
    *   { name: 'age', type: 'INTEGER', defaultValue: 0 },
    *   { name: 'city', type: 'VARCHAR(100)' },
-   * ], { 
+   * ], {
    *   confirmed: true,
    *   useTransaction: true  // PostgreSQL: all-or-nothing
    * });
-   * 
+   *
    * @throws {Error} If not initialized, not confirmed, or any migration fails
    */
   async dangerouslyMigrateSchema(fields, options = {}) {
@@ -695,34 +707,38 @@ class SecureNodeAuth {
     if (!this.initialized) {
       throw new Error(
         '❌ Cannot migrate schema before initialization.\n\n' +
-        '   For new installations, use addField() BEFORE init():\n' +
-        '   auth.addField({ name: "field1", type: "VARCHAR(255)" });\n' +
-        '   auth.addField({ name: "field2", type: "INTEGER" });\n' +
-        '   await auth.init();\n'
+          '   For new installations, use addField() BEFORE init():\n' +
+          '   auth.addField({ name: "field1", type: "VARCHAR(255)" });\n' +
+          '   auth.addField({ name: "field2", type: "INTEGER" });\n' +
+          '   await auth.init();\n'
       );
     }
 
     // Safety check 2: Require explicit confirmation
     if (!confirmed) {
       throw new Error(
-        '\n' + '='.repeat(70) + '\n' +
-        '⚠️  BULK SCHEMA MIGRATION - EXPLICIT CONFIRMATION REQUIRED\n' +
-        '='.repeat(70) + '\n\n' +
-        `   About to add ${fields.length} column(s) to existing production table.\n` +
-        '   This operation may cause extended table locks.\n\n' +
-        '   Risks include:\n' +
-        '   • Extended table locks blocking queries\n' +
-        '   • Longer downtime than single column addition\n' +
-        '   • Cannot easily reverse structure changes\n' +
-        '   • Failed rollback may leave partial changes (MySQL)\n\n' +
-        '📋 REQUIRED STEPS:\n' +
-        '   1. ✅ Backup database\n' +
-        '   2. ✅ Test on copy first\n' +
-        '   3. ✅ Schedule maintenance window\n' +
-        '   4. ✅ Alert users about downtime\n\n' +
-        '📖 To proceed, pass { confirmed: true }:\n\n' +
-        '   auth.dangerouslyMigrateSchema(fields, { confirmed: true })\n\n' +
-        '='.repeat(70) + '\n'
+        '\n' +
+          '='.repeat(70) +
+          '\n' +
+          '⚠️  BULK SCHEMA MIGRATION - EXPLICIT CONFIRMATION REQUIRED\n' +
+          '='.repeat(70) +
+          '\n\n' +
+          `   About to add ${fields.length} column(s) to existing production table.\n` +
+          '   This operation may cause extended table locks.\n\n' +
+          '   Risks include:\n' +
+          '   • Extended table locks blocking queries\n' +
+          '   • Longer downtime than single column addition\n' +
+          '   • Cannot easily reverse structure changes\n' +
+          '   • Failed rollback may leave partial changes (MySQL)\n\n' +
+          '📋 REQUIRED STEPS:\n' +
+          '   1. ✅ Backup database\n' +
+          '   2. ✅ Test on copy first\n' +
+          '   3. ✅ Schedule maintenance window\n' +
+          '   4. ✅ Alert users about downtime\n\n' +
+          '📖 To proceed, pass { confirmed: true }:\n\n' +
+          '   auth.dangerouslyMigrateSchema(fields, { confirmed: true })\n\n' +
+          '='.repeat(70) +
+          '\n'
       );
     }
 
@@ -734,7 +750,7 @@ class SecureNodeAuth {
     if (fields.length > 20) {
       console.warn(
         `⚠️  WARNING: Adding ${fields.length} columns in one migration.\n` +
-        '   Consider breaking this into smaller batches for safety.\n'
+          '   Consider breaking this into smaller batches for safety.\n'
       );
     }
 
@@ -756,7 +772,9 @@ class SecureNodeAuth {
     console.log(`📋 Table:          ${tableName}`);
     console.log(`📋 Columns to add: ${fields.length}`);
     console.log(`📋 Database:       ${isPostgres ? 'PostgreSQL' : 'MySQL'}`);
-    console.log(`📋 Transaction:    ${useTransaction && isPostgres ? 'Yes (atomic)' : 'No (sequential)'}`);
+    console.log(
+      `📋 Transaction:    ${useTransaction && isPostgres ? 'Yes (atomic)' : 'No (sequential)'}`
+    );
     console.log('='.repeat(70) + '\n');
 
     const startTime = Date.now();
@@ -765,7 +783,7 @@ class SecureNodeAuth {
       if (useTransaction && isPostgres) {
         // PostgreSQL with transaction: Atomic all-or-nothing
         console.log('🔒 Starting transaction (all-or-nothing mode)...\n');
-        
+
         const client = await this.db.getPool().connect();
         try {
           await client.query('BEGIN');
@@ -774,7 +792,7 @@ class SecureNodeAuth {
           for (let i = 0; i < fields.length; i++) {
             const field = fields[i];
             console.log(`[${i + 1}/${fields.length}] Processing column: ${field.name}...`);
-            
+
             const result = await this.dangerouslyAddColumn(field, {
               ...options,
               confirmed: true, // Already confirmed at bulk level
@@ -794,15 +812,14 @@ class SecureNodeAuth {
           await client.query('COMMIT');
           console.log('✅ Transaction committed - all changes applied\n');
           results.success = true;
-
         } catch (error) {
           if (rollbackOnError) {
             await client.query('ROLLBACK');
             console.error('❌ Transaction rolled back - no changes applied\n');
             throw new Error(
               `Migration failed on column "${fields[results.fieldsProcessed]?.name || 'unknown'}":\n` +
-              `   ${error.message}\n` +
-              `   All changes have been rolled back.`
+                `   ${error.message}\n` +
+                `   All changes have been rolled back.`
             );
           } else {
             throw error;
@@ -810,7 +827,6 @@ class SecureNodeAuth {
         } finally {
           client.release();
         }
-
       } else {
         // MySQL or no transaction: Sequential execution
         if (useTransaction && !isPostgres) {
@@ -839,16 +855,15 @@ class SecureNodeAuth {
               results.columns.push(field.name);
               console.log(`   ✅ Added successfully\n`);
             }
-
           } catch (error) {
             console.error(`\n❌ Failed to add column "${field.name}": ${error.message}\n`);
-            
+
             if (rollbackOnError) {
               throw new Error(
                 `Migration failed on column "${field.name}":\n` +
-                `   ${error.message}\n` +
-                `   ${results.fieldsAdded} column(s) were added before failure.\n` +
-                `   ⚠️  WARNING: Cannot automatically rollback (no transaction support).`
+                  `   ${error.message}\n` +
+                  `   ${results.fieldsAdded} column(s) were added before failure.\n` +
+                  `   ⚠️  WARNING: Cannot automatically rollback (no transaction support).`
               );
             } else {
               console.warn(`⚠️  Continuing with remaining columns (rollbackOnError=false)...\n`);
@@ -874,10 +889,9 @@ class SecureNodeAuth {
       console.log('='.repeat(70) + '\n');
 
       return results;
-
     } catch (error) {
       results.duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      
+
       console.error('\n' + '='.repeat(70));
       console.error('❌ BULK MIGRATION FAILED');
       console.error('='.repeat(70));
@@ -887,7 +901,7 @@ class SecureNodeAuth {
       console.error(`   Duration:  ${results.duration}s`);
       console.error(`\n   Error: ${error.message}`);
       console.error('='.repeat(70) + '\n');
-      
+
       throw error;
     }
   }
@@ -1502,6 +1516,56 @@ class SecureNodeAuth {
   }
 
   /**
+   * Send 6-digit verification code via email (optional alternative to URL-based verification)
+   * @param {string} email - User email address
+   * @param {Object} options - Optional configuration
+   * @param {number} options.expiresInMinutes - Code expiration time (default: 10 minutes)
+   * @returns {Promise<Object>} Result with success status
+   *
+   * @example
+   * // Send verification code
+   * await auth.sendVerificationCode('user@example.com');
+   *
+   * @example
+   * // Send code with custom expiration
+   * await auth.sendVerificationCode('user@example.com', { expiresInMinutes: 5 });
+   */
+  async sendVerificationCode(email, options = {}) {
+    this._ensureInitialized();
+
+    if (!this.emailService || !this.emailService.transporter) {
+      throw new Error('Email service not configured. Please set up SMTP settings.');
+    }
+
+    // Normalize email
+    email = email.trim().toLowerCase();
+
+    // Find user
+    const [users] = await this.db.pool.execute(
+      `SELECT id, email, emailVerified FROM \`${this.options.tables.users}\` WHERE email = ? LIMIT 1`,
+      [email]
+    );
+
+    if (users.length === 0) {
+      throw new Error('User not found');
+    }
+
+    const user = users[0];
+
+    if (user.emailVerified) {
+      throw new Error('Email is already verified');
+    }
+
+    // Delete old codes for this user to prevent code reuse
+    await this.db.pool.execute(
+      `DELETE FROM \`${this.options.tables.verificationTokens}\` WHERE userId = ?`,
+      [user.id]
+    );
+
+    return await this.emailService.sendVerificationCode(user.id, user.email, options);
+  }
+
+  /**
    * Verify email with token
    * @param {string} token - Verification token from email
    */
@@ -1513,6 +1577,49 @@ class SecureNodeAuth {
     // Audit log
     this.auditLogger('EMAIL_VERIFIED', {
       userId: result.userId,
+      success: true,
+    });
+
+    return result;
+  }
+
+  /**
+   * Verify email with 6-digit code
+   * @param {string} email - User email address
+   * @param {string} code - 6-digit verification code
+   * @returns {Promise<Object>} Verification result
+   *
+   * @example
+   * // Verify email with code
+   * const result = await auth.verifyCode('user@example.com', '123456');
+   * console.log(result); // { success: true, userId: 1, message: 'Email verified successfully' }
+   */
+  async verifyCode(email, code) {
+    this._ensureInitialized();
+
+    if (!email || typeof email !== 'string') {
+      throw new Error('Valid email is required');
+    }
+
+    if (!code || typeof code !== 'string') {
+      throw new Error('Valid 6-digit code is required');
+    }
+
+    // Normalize email
+    email = email.trim().toLowerCase();
+
+    // Validate code format (6 digits)
+    if (!/^\d{6}$/.test(code)) {
+      throw new Error('Code must be exactly 6 digits');
+    }
+
+    const result = await this.emailService.verifyCode(email, code);
+
+    // Audit log
+    this.auditLogger('EMAIL_VERIFIED', {
+      userId: result.userId,
+      email: email,
+      method: 'code',
       success: true,
     });
 
