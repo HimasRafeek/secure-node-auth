@@ -255,7 +255,7 @@ class SecureNodeAuth {
       console.log('[SecureNodeAuth] ✓ Indexes created');
 
       // Initialize email service if SMTP configured
-      this.emailService = new EmailService(this.options, this.db.pool, this.options.tables);
+      this.emailService = new EmailService(this.options, this.db.getPool(), this.options.tables);
       if (this.options.smtp && this.options.smtp.host) {
         console.log('[SecureNodeAuth] ✓ Email service initialized');
       }
@@ -1497,7 +1497,8 @@ class SecureNodeAuth {
     email = email.trim().toLowerCase();
 
     // Find user
-    const [users] = await this.db.pool.execute(
+    const pool = this.db.getPool();
+    const [users] = await pool.execute(
       `SELECT id, email, emailVerified FROM \`${this.options.tables.users}\` WHERE email = ? LIMIT 1`,
       [email]
     );
@@ -1541,7 +1542,8 @@ class SecureNodeAuth {
     email = email.trim().toLowerCase();
 
     // Find user
-    const [users] = await this.db.pool.execute(
+    const pool = this.db.getPool();
+    const [users] = await pool.execute(
       `SELECT id, email, emailVerified FROM \`${this.options.tables.users}\` WHERE email = ? LIMIT 1`,
       [email]
     );
@@ -1557,7 +1559,7 @@ class SecureNodeAuth {
     }
 
     // Delete old codes for this user to prevent code reuse
-    await this.db.pool.execute(
+    await pool.execute(
       `DELETE FROM \`${this.options.tables.verificationTokens}\` WHERE userId = ?`,
       [user.id]
     );
@@ -1710,7 +1712,8 @@ class SecureNodeAuth {
     // Validate new password
     this.security.validatePassword(newPassword);
 
-    const connection = await this.db.pool.getConnection();
+    const pool = this.db.getPool();
+    const connection = await pool.getConnection();
 
     try {
       await connection.beginTransaction();
@@ -1846,7 +1849,8 @@ class SecureNodeAuth {
   async isEmailVerified(userId) {
     this._ensureInitialized();
 
-    const [users] = await this.db.pool.execute(
+    const pool = this.db.getPool();
+    const [users] = await pool.execute(
       `SELECT emailVerified FROM \`${this.options.tables.users}\` WHERE id = ? LIMIT 1`,
       [userId]
     );
