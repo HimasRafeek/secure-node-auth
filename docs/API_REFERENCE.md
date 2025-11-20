@@ -577,6 +577,77 @@ await auth.resendVerificationEmail(
 );
 ```
 
+#### `async sendVerificationCode(email, options)` 🆕
+Send 6-digit verification code via email (alternative to URL-based verification).
+- **Parameters:**
+  - `email` (string): User's email address
+  - `options.expiresInMinutes` (number, optional): Code expiration time (default: 10 minutes)
+- **Returns:** `{ success, messageId, code }`
+- **Best for:** Mobile apps, better UX
+
+```javascript
+// Send verification code
+await auth.sendVerificationCode('user@example.com', {
+  expiresInMinutes: 10
+});
+
+// Express.js example
+app.post('/api/send-verification-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+    await auth.sendVerificationCode(email);
+    res.json({ success: true, message: 'Verification code sent' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Custom template
+const auth = new SecureNodeAuth({
+  emailTemplates: {
+    verificationCode: {
+      subject: 'Your Verification Code',
+      html: (code, email, minutes) => `Your code: ${code}`
+    }
+  }
+});
+```
+
+#### `async verifyCode(email, code)` 🆕
+Verify email using 6-digit code (alternative to token-based verification).
+- **Parameters:**
+  - `email` (string): User's email address
+  - `code` (string): 6-digit verification code
+- **Returns:** `{ success, userId, message }`
+- **Security:** Code must be exactly 6 digits, expires in 10 minutes (default)
+
+```javascript
+// Verify code
+await auth.verifyCode('user@example.com', '123456');
+
+// Express.js example
+app.post('/api/verify-code', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    const result = await auth.verifyCode(email, code);
+    res.json({ success: true, message: 'Email verified successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Error handling
+try {
+  await auth.verifyCode('user@example.com', '123456');
+} catch (error) {
+  if (error.message === 'Invalid or expired verification code') {
+    // Code wrong or expired
+  } else if (error.message === 'Code must be exactly 6 digits') {
+    // Invalid format
+  }
+}
+```
+
 #### `async isEmailVerified(userId)`
 Check if user's email has been verified.
 ```javascript

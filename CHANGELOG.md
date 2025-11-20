@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-11-20
+
+### ✨ New Features - 6-Digit Code Authentication
+
+- **6-Digit Email Verification Codes** - Modern alternative to URL-based verification
+  - `sendVerificationCode(email, options)` - Send 6-digit verification code via email
+  - `verifyCode(email, code)` - Verify email with 6-digit code
+  - Customizable expiration (default: 10 minutes)
+  - Perfect for mobile apps and improved UX
+  - Format validation (exactly 6 digits required)
+  - Automatic cleanup of old codes
+
+- **6-Digit Password Reset Codes** - Secure password recovery with codes
+  - `sendPasswordResetCode(email, options)` - Send 6-digit reset code via email
+  - `resetPasswordWithCode(email, code, newPassword)` - Reset password with code
+  - Customizable expiration (default: 15 minutes)
+  - All user sessions revoked after successful reset
+  - Single-use codes (deleted after verification)
+
+### 📧 Email Templates
+
+- Added beautiful HTML email templates for verification codes
+- Added HTML email templates for password reset codes
+- Support for custom email templates via configuration
+- Mobile-responsive design with security tips
+
+### 📚 Documentation
+
+- Added comprehensive guide: `docs/VERIFICATION_AND_AUDIT_GUIDE.md`
+- Added examples: `examples/email-verification-examples.js` (6+ scenarios)
+- Added examples: `examples/password-reset-examples.js` (8+ scenarios)
+- Updated `docs/API_REFERENCE.md` with all new methods
+- Updated README with feature comparisons and usage tips
+- Added IMPLEMENTATION_VERIFICATION.md report
+
+### 🔐 Security Features
+
+- Codes expire automatically (10-15 minutes, customizable)
+- Format validation (must be exactly 6 digits)
+- Single-use codes (deleted after successful use)
+- Automatic cleanup when sending new codes
+- Rate limiting recommended (examples provided)
+- Audit logging for all verification/reset events
+
+### 🎯 Developer Experience
+
+- Zero breaking changes - all existing code works
+- TypeScript definitions for all new methods
+- Works with existing database tables
+- Optional feature - use alongside URL-based methods
+- Express.js integration examples included
+
+### 🆚 Method Comparison
+
+| Feature | URL Method | 6-Digit Code Method |
+|---------|-----------|---------------------|
+| Email Verification | 24h expiry | 10min expiry |
+| Password Reset | 1h expiry | 15min expiry |
+| Best For | Web apps | Mobile apps |
+| User Action | Click link | Enter code |
+
 ## [1.3.0] - 2025-11-20
 
 ### ⚠️ New Features - Runtime Schema Migrations
