@@ -163,20 +163,39 @@ DESCRIBE secure_auth_users;
 
 ## 📡 Available Endpoints
 
-After mounting `auth.router()`, you get these endpoints:
+After mounting `auth.router()` for Express or using `FastifyPlugin` for Fastify, you get these endpoints:
 
+### Core Authentication
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/auth/register` | POST | Register new user |
 | `/auth/login` | POST | Login user |
 | `/auth/refresh` | POST | Refresh access token |
 | `/auth/logout` | POST | Logout (revoke token) |
-| `/auth/logout-all` | POST | Logout all devices |
-| `/auth/me` | GET | Get current user |
-| `/auth/me` | PATCH | Update profile |
-| `/auth/change-password` | POST | Change password |
+| `/auth/logout-all` | POST | Logout all devices (protected) |
+| `/auth/me` | GET | Get current user (protected) |
+| `/auth/me` | PATCH | Update profile (protected) |
+| `/auth/change-password` | POST | Change password (protected) |
 | `/auth/verify` | POST | Verify token |
 | `/auth/health` | GET | Health check |
+
+### Email Verification (choose one method)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth/send-verification-email` | POST | Send verification URL via email |
+| `/auth/verify-email` | POST | Verify with URL token |
+| `/auth/send-verification-code` 🆕 | POST | Send 6-digit code |
+| `/auth/verify-code` 🆕 | POST | Verify with 6-digit code |
+
+### Password Reset (choose one method)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth/forgot-password` | POST | Send reset URL via email |
+| `/auth/reset-password` | POST | Reset with URL token |
+| `/auth/send-password-reset-code` 🆕 | POST | Send 6-digit reset code |
+| `/auth/reset-password-with-code` 🆕 | POST | Reset with 6-digit code |
+
+> **💡 Pro Tip:** 6-digit codes are perfect for mobile apps and provide better UX!
 
 ## 🎨 Next Steps
 

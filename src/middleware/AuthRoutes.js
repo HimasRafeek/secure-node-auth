@@ -25,7 +25,7 @@ class AuthRoutes {
     if (this.options.enableRateLimit) {
       const rateLimiter = this.auth.security.createRateLimiter({
         windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 10 // 10 requests per window
+        max: 10, // 10 requests per window
       });
       this.router.use(rateLimiter);
     }
@@ -40,7 +40,7 @@ class AuthRoutes {
         body('email').isEmail().normalizeEmail(),
         body('password').isLength({ min: 8 }),
         body('firstName').optional().trim(),
-        body('lastName').optional().trim()
+        body('lastName').optional().trim(),
       ],
       this._register.bind(this)
     );
@@ -48,78 +48,44 @@ class AuthRoutes {
     // Login
     this.router.post(
       '/login',
-      [
-        body('email').isEmail().normalizeEmail(),
-        body('password').notEmpty()
-      ],
+      [body('email').isEmail().normalizeEmail(), body('password').notEmpty()],
       this._login.bind(this)
     );
 
     // Refresh token
-    this.router.post(
-      '/refresh',
-      [body('refreshToken').notEmpty()],
-      this._refresh.bind(this)
-    );
+    this.router.post('/refresh', [body('refreshToken').notEmpty()], this._refresh.bind(this));
 
     // Logout
-    this.router.post(
-      '/logout',
-      [body('refreshToken').notEmpty()],
-      this._logout.bind(this)
-    );
+    this.router.post('/logout', [body('refreshToken').notEmpty()], this._logout.bind(this));
 
     // Logout all devices
-    this.router.post(
-      '/logout-all',
-      this.auth.middleware(),
-      this._logoutAll.bind(this)
-    );
+    this.router.post('/logout-all', this.auth.middleware(), this._logoutAll.bind(this));
 
     // Get current user
-    this.router.get(
-      '/me',
-      this.auth.middleware(),
-      this._getCurrentUser.bind(this)
-    );
+    this.router.get('/me', this.auth.middleware(), this._getCurrentUser.bind(this));
 
     // Update user
-    this.router.patch(
-      '/me',
-      this.auth.middleware(),
-      this._updateUser.bind(this)
-    );
+    this.router.patch('/me', this.auth.middleware(), this._updateUser.bind(this));
 
     // Change password
     this.router.post(
       '/change-password',
       this.auth.middleware(),
-      [
-        body('oldPassword').notEmpty(),
-        body('newPassword').isLength({ min: 8 })
-      ],
+      [body('oldPassword').notEmpty(), body('newPassword').isLength({ min: 8 })],
       this._changePassword.bind(this)
     );
 
     // Verify token
-    this.router.post(
-      '/verify',
-      [body('token').notEmpty()],
-      this._verifyToken.bind(this)
-    );
+    this.router.post('/verify', [body('token').notEmpty()], this._verifyToken.bind(this));
 
-    // Email verification routes
+    // Email verification routes (URL method)
     this.router.post(
       '/send-verification-email',
       [body('email').isEmail().normalizeEmail()],
       this._sendVerificationEmail.bind(this)
     );
 
-    this.router.post(
-      '/verify-email',
-      [body('token').notEmpty()],
-      this._verifyEmail.bind(this)
-    );
+    this.router.post('/verify-email', [body('token').notEmpty()], this._verifyEmail.bind(this));
 
     this.router.post(
       '/resend-verification-email',
@@ -127,7 +93,25 @@ class AuthRoutes {
       this._resendVerificationEmail.bind(this)
     );
 
-    // Password reset routes
+    // Email verification routes (6-digit code method)
+    this.router.post(
+      '/send-verification-code',
+      [body('email').isEmail().normalizeEmail()],
+      this._sendVerificationCode.bind(this)
+    );
+
+    this.router.post(
+      '/verify-code',
+      [
+        body('email').isEmail().normalizeEmail(),
+        body('code')
+          .matches(/^\d{6}$/)
+          .withMessage('Code must be 6 digits'),
+      ],
+      this._verifyCode.bind(this)
+    );
+
+    // Password reset routes (URL method)
     this.router.post(
       '/forgot-password',
       [body('email').isEmail().normalizeEmail()],
@@ -136,11 +120,27 @@ class AuthRoutes {
 
     this.router.post(
       '/reset-password',
-      [
-        body('token').notEmpty(),
-        body('newPassword').isLength({ min: 8 })
-      ],
+      [body('token').notEmpty(), body('newPassword').isLength({ min: 8 })],
       this._resetPassword.bind(this)
+    );
+
+    // Password reset routes (6-digit code method)
+    this.router.post(
+      '/send-password-reset-code',
+      [body('email').isEmail().normalizeEmail()],
+      this._sendPasswordResetCode.bind(this)
+    );
+
+    this.router.post(
+      '/reset-password-with-code',
+      [
+        body('email').isEmail().normalizeEmail(),
+        body('code')
+          .matches(/^\d{6}$/)
+          .withMessage('Code must be 6 digits'),
+        body('newPassword').isLength({ min: 8 }),
+      ],
+      this._resetPasswordWithCode.bind(this)
     );
   }
 
@@ -545,6 +545,121 @@ class AuthRoutes {
 
       const { token, newPassword } = req.body;
       const result = await this.auth.resetPassword(token, newPassword);
+      
+      res.json({
+        success: true,
+        message: result.message
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Send verification code (6-digit)
+   */
+  async _sendVerificationCode(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          success: false,
+          errors: errors.array() 
+        });
+      }
+
+      const { email } = req.body;
+      await this.auth.sendVerificationCode(email);
+      
+      res.json({
+        success: true,
+        message: 'Verification code sent successfully'
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Verify email with 6-digit code
+   */
+  async _verifyCode(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          success: false,
+          errors: errors.array() 
+        });
+      }
+
+      const { email, code } = req.body;
+      const result = await this.auth.verifyCode(email, code);
+      
+      res.json({
+        success: true,
+        message: 'Email verified successfully',
+        data: result
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Send password reset code (6-digit)
+   */
+  async _sendPasswordResetCode(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          success: false,
+          errors: errors.array() 
+        });
+      }
+
+      const { email } = req.body;
+      await this.auth.sendPasswordResetCode(email);
+      
+      // Security best practice: Don't reveal if email exists
+      res.json({
+        success: true,
+        message: 'If the email exists, a reset code has been sent.'
+      });
+    } catch (error) {
+      // Don't reveal errors
+      res.json({
+        success: true,
+        message: 'If the email exists, a reset code has been sent.'
+      });
+    }
+  }
+
+  /**
+   * Reset password with 6-digit code
+   */
+  async _resetPasswordWithCode(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          success: false,
+          errors: errors.array() 
+        });
+      }
+
+      const { email, code, newPassword } = req.body;
+      const result = await this.auth.resetPasswordWithCode(email, code, newPassword);
       
       res.json({
         success: true,

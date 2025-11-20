@@ -102,18 +102,46 @@ auth.init().then(() => {
 
 ### Authentication Endpoints
 
+#### Core Authentication Routes
 ```javascript
 POST   /auth/register        # Register new user
 POST   /auth/login           # Login user  
 POST   /auth/refresh         # Refresh access token
 POST   /auth/logout          # Logout single session
-POST   /auth/logout-all      # Logout all sessions
+POST   /auth/logout-all      # Logout all sessions (protected)
 GET    /auth/me              # Get current user (protected)
 PATCH  /auth/me              # Update user profile (protected)
 POST   /auth/change-password # Change password (protected)
 POST   /auth/verify          # Verify token validity
 GET    /auth/health          # Health check
 ```
+
+#### Email Verification Routes (URL Method)
+```javascript
+POST   /auth/send-verification-email    # Send verification email with URL
+POST   /auth/verify-email               # Verify email with token
+POST   /auth/resend-verification-email  # Resend verification email
+```
+
+#### Email Verification Routes (6-Digit Code Method) 🆕
+```javascript
+POST   /auth/send-verification-code     # Send 6-digit verification code
+POST   /auth/verify-code                # Verify email with 6-digit code
+```
+
+#### Password Reset Routes (URL Method)
+```javascript
+POST   /auth/forgot-password            # Send password reset email with URL
+POST   /auth/reset-password             # Reset password with token
+```
+
+#### Password Reset Routes (6-Digit Code Method) 🆕
+```javascript
+POST   /auth/send-password-reset-code   # Send 6-digit reset code
+POST   /auth/reset-password-with-code   # Reset password with 6-digit code
+```
+
+> **💡 Note:** Both URL and 6-digit code methods are available. Use URL method for web apps, 6-digit codes for mobile apps or simpler user experience.
 
 ### Programmatic API
 
